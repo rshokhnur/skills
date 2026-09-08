@@ -82,7 +82,7 @@ Nearly every interface message is these three parts, in this order — include a
 - **Numerals always, even 1–9.** "You have 3 messages." Numbers are what users scan for.
 - **Concrete beats abstract.** "Until Jan 31, you can deposit $400 more" beats "Your deposit limit is $1,000 per calendar month."
 - **Positive framing.** Say what to do, not what not to do: "Use only letters and numbers", not "Don't use special characters". Negation forces the user to invert the logic; and spell out load-bearing negations — "cannot be undone", not "can't" (users misread negative contractions as positive; GOV.UK research). Everywhere else, contractions: yes — "it's", "you're" are how people talk.
-- **Person: you/your.** Drop the pronoun when the label survives without it ("Favorites", "Settings"). "My" only in strings the user notionally speaks: "I agree to the terms", "Remember my password". **Never mix registers** — "Change your preferences in My Account" is the canonical error. Avoid "we" in system strings ("We couldn't save…" → "Couldn't save…") except: a real human will act ("We'll review your appeal within 2 days"), or a privacy promise the company must own.
+- **Person: you/your.** Drop the pronoun when the label survives without it ("Favorites", "Settings"). "My" only in strings the user notionally speaks: "I agree to the terms", "Remember my password". **Never mix registers** — "Change your preferences in My Account" is the canonical error. The one sanctioned split is by speaker: buttons and inputs are the user talking ("Save my changes", "I agree"), titles and body are the product talking ("Your changes"). That is consistent, not mixed — a screen is a dialogue in which the product speaks through titles and body and the user answers through buttons and inputs (Hall; Smashing), which is also why a first-person CTA converts: the button reads as the user's own voice (Aagaard). Avoid "we" in system strings ("We couldn't save…" → "Couldn't save…") except: a real human will act ("We'll review your appeal within 2 days"), or a privacy promise the company must own.
 - **Active voice, present tense, imperative for instructions.** Two sanctioned passive exceptions: (1) errors where active voice would blame the user — "That site can't be found" is deliberately passive; do not "fix" it; (2) headings where passive front-loads the keyword.
 - **Never "please" in buttons or routine instructions** — it adds length and implies the action is optional. Never reflexive "sorry" — reserve one "sorry" for a genuine product-caused failure with real consequences.
 - **Localization-safe by default:** no idioms, puns, or pop-culture ("hit the ground running" → "start quickly"). Expect short strings to grow 2–3× in translation (W3C/IBM data: ≤10-char strings expand 200–300%) — never write copy that only fits exactly. One full sentence per string with named placeholders ("You have {count} new messages"); never concatenate fragments; never "(s)" plural hacks.
@@ -108,7 +108,8 @@ Nearly every interface message is these three parts, in this order — include a
 User triggers an action with consequences
 ├── Reversible? → NO dialog. Act immediately + toast with "Undo".
 │     ("Message archived  [Undo]" — the Gmail model)
-├── Risky but recoverable (overwrite, bulk edit, send to many)?
+├── Risky but recoverable (overwrite, bulk edit, send to many,
+│     discard a completed multi-step form)?
 │     → Confirmation dialog: title = the action as a question,
 │       body = concrete consequence with named object + count,
 │       buttons = verb-echo ("Delete 82 photos" / "Cancel")
@@ -140,14 +141,16 @@ If the action itself is "cancel" (a reservation, a subscription), no button may 
 | "click/tap/enter the…" | Explaining mechanics means the design failed | Name the control: "Select Save" |
 | Jargon/abbreviations: "OTP", "auth", "params" | User's vocabulary, not the system's | "6-digit code", "sign-in" |
 | "We miss you 😢", guilt urgency | Manufactured pressure trains uninstalls | Real, expiring value or silence |
+| "Cancel" for throwing away a draft | Nothing is being cancelled — the input is discarded; and it collides with the dismiss action | "Discard draft" + confirm or undo |
 
 ## Checks before shipping
 
 1. **Role-play read-aloud** (Erika Hall): read the screen as a dialogue — product speaks titles and body, user speaks buttons and inputs. If the exchange sounds wrong spoken, it's wrong on screen. ("Discard draft?" — "Keep editing." passes. "Are you sure?" — "OK." fails.)
 2. **Scan test:** read only each string's first 2 words and the buttons. Does the screen still make sense? (Most users read exactly that much.)
 3. **Banned-list sweep** over every string, including `aria-label`s and `alt` text.
-4. **Consistency grep:** same action → same word across the whole surface; no "my"/"your" mixing; one capitalization system.
-5. **Truncation, wrap & i18n:** does the layout survive strings 2× longer? Are all strings full sentences with named placeholders? Do headings avoid a stranded last word, and do all buttons sit on one line?
+4. **Consistency grep:** same action → same word across the whole surface; no "my"/"your" mixing; one capitalization system; scale and status words in one grammatical form ("Low / Normal / High" — never an imperative like "Pay attention" among states, which reads as an instruction the user can't compare to its neighbours; Microsoft: never switch moods mid-sentence). Inconsistency costs even when every string is clear: it creates subconscious friction and erodes trust (UX Writing Hub).
+5. **Promise check:** every number in copy matches the UI it describes ("Step 1 of 4" over 5 progress segments is a bug), and every capability the copy names has a visible control ("edit or delete" needs both buttons). Words set an expectation and users judge what happens against it; one mismatch shrinks their willingness to trust anything else on the screen (NN/g, link-label research — a label is a promise).
+6. **Truncation, wrap & i18n:** does the layout survive strings 2× longer? Are all strings full sentences with named placeholders? Do headings avoid a stranded last word, and do all buttons sit on one line?
 
 ## Going deeper
 

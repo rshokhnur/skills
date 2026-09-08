@@ -88,14 +88,14 @@ Skills/
 
 | Skill | Pillar | Status | Notes |
 |---|---|---|---|
-| `ux-writing` | Product & UX | testing | Interface copy only (marketing copy = later skill). Default voice: Apple-calm (minimal, plain, no exclamation) + tone-adaptation procedure by user emotional state. SKILL.md + references/. Research: NN/g, Baymard, IxDF, UX Collective, Material, HIG, Microsoft, Mailchimp, Polaris, GOV.UK, Podmajersky, Yifrah, Saito. 71 source extractions in research/ |
-| `text-layout` | Design engineering | testing | Skill #2, born from the orphans question. How text physically sits in UI: wrapping, breaking, orphans (`text-wrap: balance/pretty`), glue pairs, truncation/`line-clamp`, overflow, line length, alignment/rag, i18n text behavior (CJK/RTL/expansion). Sibling of `ux-writing` (words) and future `typography` (typefaces/scale). Research: MDN/web.dev/CSSWG, Comeau, Shadeed, Butterick, Rutter, NN/g, Baymard, WCAG, W3C i18n — 41 source extractions in research/ |
+| `ux-writing` | Product & UX | testing | Interface copy only (marketing copy = later skill). Default voice: Apple-calm (minimal, plain, no exclamation) + tone-adaptation procedure by user emotional state. SKILL.md + references/. Research: NN/g, Baymard, IxDF, UX Collective, Material, HIG, Microsoft, Mailchimp, Polaris, GOV.UK, Podmajersky, Yifrah, Saito. 71 source extractions in research/. **Test #1 (2026-09-08, medical-team prototype check-in + pain report): 12 findings, 3 refinements, triggered correctly — see tests/** |
+| `text-layout` | Design engineering | testing | Skill #2, born from the orphans question. How text physically sits in UI: wrapping, breaking, orphans (`text-wrap: balance/pretty`), glue pairs, truncation/`line-clamp`, overflow, line length, alignment/rag, i18n text behavior (CJK/RTL/expansion). Sibling of `ux-writing` (words) and future `typography` (typefaces/scale). Research: MDN/web.dev/CSSWG, Comeau, Shadeed, Butterick, Rutter, NN/g, Baymard, WCAG, W3C i18n — 41 source extractions in research/. **Test #1 (2026-09-08, same slice): 4 findings incl. a real orphan-producing layout bug, 2 refinements — see tests/** |
 
 Statuses: `idea → drafting → testing → shipped`
 
 ## Backlog (proposals — react, reorder, kill freely)
 
-- **Text family:** `typography` (typefaces, scale, weight, leading) — completes the trio with `ux-writing` (words) and `text-layout` (wrapping/breaking); `marketing-copy` (persuasion surfaces, explicitly excluded from ux-writing)
+- **Text family:** `typography` (typefaces, scale, weight, leading; note from test #1: px-only font sizes block user text scaling — a rule for this skill) — completes the trio with `ux-writing` (words) and `text-layout` (wrapping/breaking); `marketing-copy` (persuasion surfaces, explicitly excluded from ux-writing)
 - **Visual craft:** a spacing-system skill (when 4/8/12/16, when to break the grid); a "make this UI look expensive" audit skill
 - **Design engineering:** a component polish checklist skill; a CSS layout decision skill (flex vs grid vs flow, with the why)
 - **Product & UX:** a flow-mapping skill (UX copy → done as `ux-writing`)
@@ -118,6 +118,8 @@ Statuses: `idea → drafting → testing → shipped`
 ## Learnings log
 
 Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-09-08 — First real-world test (medical-team prototype, athlete check-in + pain report).** Ran both skills as written against 12 screens, rendered at 375px and 320px. Result: the copy was already good and neither skill invented problems — they found the second tier (a button promising less than it does, copy naming a control that doesn't exist, a 6-step form discarded on one tap with no confirm/undo, vocabulary drift across screens) plus one genuine layout bug (a nowrap sibling squeezing every result row into orphans). Six refinements landed. Lessons: (1) a good test subject has *good* copy — mediocre copy makes any skill look smart; (2) render at 320px, always — the 375px view hid the worst wrapping; (3) the decision tree missed a whole branch (sibling hogging width) that one real screen exposed in seconds — trees are hypotheses until they meet layouts; (4) keep test reports in `tests/` so the next test can be compared. Report: tests/2026-09-08-medical-prototype.md
 
 - **2026-09-08 — Repo design aligned with emilkowalski/skills; installer problem solved for free.** Studied Emil's public repo: flat `skills/<name>/SKILL.md` + UPPERCASE references, frontmatter = name + description only (`disable-model-invocation` for deliberately-invoked skills), MIT, `.gitattributes`, no installer code — he uses the universal `skills` CLI. Ours was already discoverable by it, so Phase 3 is deleted. Caught only by running a real install: the CLI copies the whole skill folder, so `research/` moved to top level. Retrofitted Operating posture + Hard rules to both skills. Left descriptions untouched pending trigger data. Lesson: test the install path, not just the file layout — a "compatible" repo was shipping 41 research files per install.
 

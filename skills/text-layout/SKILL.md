@@ -48,6 +48,12 @@ What exactly is failing?
 │   → Orphan ladder below (balance / pretty / glue / reword).
 ├── A pair splits across lines ("3 | MB", "Jan | 24")
 │   → Glue below.
+├── A text column beside a nowrap or fixed-width sibling collapses
+│   into 1–3-word lines
+│   → The SIBLING is hogging the width. Let it wrap or shrink
+│     (drop its nowrap, flex: 0 1 auto), or stack the row under a
+│     narrow breakpoint — before touching the text. Then
+│     text-wrap: pretty on the column.
 └── It fit in English but breaks in German / at 320px / at 200% zoom
     → Stress rules below. The layout was overfit to one language and
       one zoom level — fix the container, don't shorten the copy.
@@ -67,7 +73,7 @@ What exactly is failing?
 
 ## Glue — pairs that must not split
 
-Glue by default: number + unit ("3 MB", "10 min"), number + counted noun ("page 7"), date parts ("Jan 24"), amount + currency, honorific + name, §/Fig./Ex. + reference, hyphenated codes ("I-94"). Unicode's own line-breaking rules protect "1,234.56" and "$100" — but **not** number + unit; that glue is on you.
+Glue by default: number + unit ("3 MB", "10 min"), number + counted noun ("page 7"), date parts ("Jan 24"), amount + currency, honorific + name, §/Fig./Ex. + reference, hyphenated codes ("I-94"), and label + value pairs in inline lists ("Sleep 7h 20m · Steps 8,200" — each pair is one token). Unicode's own line-breaking rules protect "1,234.56" and "$100" — but **not** number + unit; that glue is on you.
 
 Mechanism, in order of preference:
 
