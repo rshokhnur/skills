@@ -1,0 +1,115 @@
+# Skills — Project Doc
+
+> A personal collection of agent skills about design and beyond — written for myself first, published for everyone second.
+>
+> This is the living document for the project. Every working session that creates or changes a skill should also update this file: the inventory, the decisions, and the learnings log. It gets smarter as the collection grows.
+
+**Status:** 2 skills drafted and in testing (`ux-writing`, `text-layout`), ~110 sources archived. Installed locally via symlinks into all 5 agents; git initialized (no commits yet); name TBD. (Updated 2026-09-08)
+
+---
+
+## Goals
+
+1. **Encode taste.** Turn design judgment — mine, and the best published thinking — into skills that actually change how an agent works, not vague "make it nice" advice.
+2. **Use them daily.** Every skill must earn its place by being useful in my own real work before it ships.
+3. **Publish.** A public GitHub repo, then an `npx` installer that puts the skills into every major coding agent in one command.
+
+## Scope — four pillars
+
+| Pillar | Territory |
+|---|---|
+| **Visual design craft** | Hierarchy, spacing, typography, color, layout — the judgment that makes UI look right |
+| **Design engineering** | Implementing design in code: CSS, React components, motion, polish details |
+| **Product & UX thinking** | User flows, information architecture, UX writing/copy, product decisions |
+| **Personal workflows** | My own process: review checklists, project setup, conventions, how I work |
+
+"Beyond design" = anything from these pillars that I genuinely have opinions about. Depth over coverage: one sharp skill beats three shallow ones.
+
+## Decisions
+
+| Date | Decision | Why |
+|---|---|---|
+| 2026-08-28 | Multi-agent from day one (Claude Code, Cursor, Codex, OpenCode, Gemini CLI) | Publishing is a goal, and the SKILL.md format is already portable across these agents — no reason to lock in |
+| 2026-08-28 | Canonical source format: Claude `SKILL.md` (frontmatter + markdown body), one folder per skill | It's the richest format; other agents consume the same file or a light transform. Author once, install everywhere |
+| 2026-08-28 | Publish via public GitHub repo first, `npx` installer second | Repo is the credible start; installer (like animations.dev's) comes once there are enough skills to be worth installing |
+| 2026-08-28 | Content = my taste + curated masters + per-topic research, blended per skill | Interview me for opinions, synthesize published wisdom (HIG, Refactoring UI, Emil Kowalski, …) in my own words, research to fill gaps |
+| 2026-08-28 | Raw research reports live in `skills/<name>/research/`, kept in the repo but excluded from installs | Research is reusable when refining a skill later; shipping it would bloat installs and dilute the skill |
+| 2026-08-28 | Skills stay small and focused — one per aspect; big topics split into siblings (text → `ux-writing` / `text-layout` / `typography`) | The user's explicit call: "useful small (not too small) skills for each aspect." Matches the animations.dev model; mega-skills dilute attention |
+| 2026-08-28 | Research convention v2: full-fidelity per-source extraction files in `skills/<name>/research/sources/` — one file per source, exhaustive, in our own words (quotes <15 words), committed to git, never published or installed | Distilled reports lose the detail needed for later refinement. Verbatim full copies would be copyright infringement once the repo goes public — exhaustive extraction keeps the fidelity without republishing anyone's text |
+| 2026-09-08 | Local install = symlinks from every agent's skill folder (`~/.claude/skills`, `~/.cursor/skills`, `~/.codex/skills`, `~/.config/opencode/skills`, `~/.gemini/skills`) to `skills/<name>` in this repo | Edits in the repo are live in every agent instantly — the right loop while skills are in testing. The future npx installer copies instead; symlinks are the dev-mode equivalent |
+
+## Planned repo structure
+
+```
+Skills/
+├── PROJECT.md          # this file — the living doc
+├── CLAUDE.md           # instructions for Claude sessions in this repo
+├── README.md           # public-facing, written when we publish
+├── skills/             # source of truth
+│   └── <skill-name>/
+│       ├── SKILL.md    # the skill itself
+│       └── references/ # optional supporting files the skill points to
+└── installer/          # the npx package, built in Phase 3
+```
+
+## Skill format conventions
+
+- Frontmatter: `name` (kebab-case), `description` — the description is the trigger surface: what it does + when to use it + concrete trigger words. An agent decides to load the skill from the description alone.
+- Body follows the `writing-skills` principles:
+  - Encode **process and decisions**, not example output.
+  - Every rule ships with its **why** — rules without reasons get ignored or misapplied.
+  - **Strict beats vague**: "never X, always Y" with stated exceptions, not "consider X".
+  - Cut every line that doesn't change the agent's behavior.
+  - One skill, one job. If a skill covers two jobs, it's two skills.
+- Quality bar: the animations.dev skills installed in `~/.claude/skills` — study how they structure descriptions, decision trees, and trigger lists.
+- Language: English (it's getting published).
+
+## The pipeline — how we create each skill
+
+1. **Pick** a topic from the backlog; define the one job it does.
+2. **Interview** — Claude grills me for my actual opinions, rules, and pet peeves on the topic. My answers are the spine.
+3. **Curate & research** — pull in the best published thinking; it supports my taste, never replaces it.
+4. **Draft** the SKILL.md (load the `writing-skills` skill first).
+5. **Test by running** — use it on real tasks; a skill that doesn't change the output gets rewritten or killed.
+6. **Ship** — mark it `shipped` in the inventory.
+7. **Log** — add what we learned to the Learnings log below.
+
+## Skill inventory
+
+| Skill | Pillar | Status | Notes |
+|---|---|---|---|
+| `ux-writing` | Product & UX | testing | Interface copy only (marketing copy = later skill). Default voice: Apple-calm (minimal, plain, no exclamation) + tone-adaptation procedure by user emotional state. SKILL.md + references/. Research: NN/g, Baymard, IxDF, UX Collective, Material, HIG, Microsoft, Mailchimp, Polaris, GOV.UK, Podmajersky, Yifrah, Saito. 71 source extractions in research/ |
+| `text-layout` | Design engineering | testing | Skill #2, born from the orphans question. How text physically sits in UI: wrapping, breaking, orphans (`text-wrap: balance/pretty`), glue pairs, truncation/`line-clamp`, overflow, line length, alignment/rag, i18n text behavior (CJK/RTL/expansion). Sibling of `ux-writing` (words) and future `typography` (typefaces/scale). Research: MDN/web.dev/CSSWG, Comeau, Shadeed, Butterick, Rutter, NN/g, Baymard, WCAG, W3C i18n — 41 source extractions in research/ |
+
+Statuses: `idea → drafting → testing → shipped`
+
+## Backlog (proposals — react, reorder, kill freely)
+
+- **Text family:** `typography` (typefaces, scale, weight, leading) — completes the trio with `ux-writing` (words) and `text-layout` (wrapping/breaking); `marketing-copy` (persuasion surfaces, explicitly excluded from ux-writing)
+- **Visual craft:** a spacing-system skill (when 4/8/12/16, when to break the grid); a "make this UI look expensive" audit skill
+- **Design engineering:** a component polish checklist skill; a CSS layout decision skill (flex vs grid vs flow, with the why)
+- **Product & UX:** a flow-mapping skill (UX copy → done as `ux-writing`)
+- **Workflows:** a project-kickoff skill (how I start any design project); a design-review skill encoding what I look for
+
+## Publishing plan
+
+- **Phase 1 — build (now):** write skills, use them locally, keep the repo private-ish.
+- **Phase 2 — GitHub:** once ~5 skills are `shipped`: public repo, README with install instructions, MIT license (TBC).
+- **Phase 3 — installer:** `npx @<scope>/install`-style CLI that detects agents and copies skills into `~/.claude/skills`, `~/.cursor/skills`, `~/.codex/skills`, `~/.config/opencode/skills`, `~/.gemini/skills`.
+
+## Open questions
+
+- [ ] Project name (also becomes the npm scope + GitHub repo name)
+- [ ] Author byline for published skills
+- [ ] License — MIT?
+- [x] Which skill do we write first? → `ux-writing` (2026-08-28)
+- [x] `git init` → done 2026-09-08 (branch `main`, no commits yet)
+
+## Learnings log
+
+Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-08-28 — Skill #2 (`text-layout`) drafted; sources convention proven.** ~100 full-fidelity source extractions now in `research/sources/` across both skills (39 text-layout, ~60 ux-writing incl. backfill). The backfill's accuracy audit justified the whole convention: it caught that summaries had drifted from sources — the 52%/8% tone stat's real meaning, the 12%/81% permission numbers' attribution (Tan et al.), NN/g's ~2–9s spinner band, "no preselected default" in dialogs (NN/g + current HIG), and that the oft-quoted HIG alert-pronoun ban is legacy, removed from current HIG. Lesson: popular summaries of style guides lag the guides themselves — extract from the live source, date the access, and re-verify "famous" rules before encoding them. Also learned: agents writing files incrementally survive usage-limit kills with zero loss — make write-as-you-go a standing instruction for research agents.
+
+- **2026-08-28 — Skill #1 (`ux-writing`) drafted.** Pipeline worked: 4 scoping questions → 5 parallel research agents (NN/g, Baymard, IxDF, UX Collective, Apple/Material/MS/Mailchimp/Polaris/GOV.UK guides, Podmajersky/Yifrah/Saito) → synthesis into SKILL.md + 3 references. Learnings: (1) asking researchers to flag **source disagreements** was the highest-value instruction — the 12 documented conflicts (sentence vs title case, my/your, "sorry", OK, …) are exactly where a skill must make a call instead of staying vague; (2) research agents die on usage limits but resume cleanly with context intact — resume, don't restart; (3) archive raw research in `research/` immediately, before synthesis — reports only live in conversation memory otherwise; (4) numbers make rules land ("79% scan" beats "users scan") — demand exact figures in research prompts; (5) first feedback round: research misses the boundary topics — the user's "one word alone on a line" question added a whole copy-meets-layout section (orphans, glue pairs, wrap rules) the five research slices never surfaced. The user's pet peeves ARE the differentiator; harvest them deliberately. Still to do: test on real tasks, then ship.
+- **2026-08-28 — Project created.** Scope, format, pipeline, and publishing path decided (see Decisions). Installed the animations.dev skill set globally as a reference-quality example of the genre. Next session: pick a name and write skill #1.
