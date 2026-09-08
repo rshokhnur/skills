@@ -4,7 +4,7 @@
 >
 > This is the living document for the project. Every working session that creates or changes a skill should also update this file: the inventory, the decisions, and the learnings log. It gets smarter as the collection grows.
 
-**Status:** 2 skills drafted and in testing (`ux-writing`, `text-layout`), ~110 sources archived. Installed locally via symlinks into all 5 agents; git initialized (no commits yet); name TBD. (Updated 2026-09-08)
+**Status:** 2 skills drafted and in testing (`ux-writing`, `text-layout`), ~110 sources archived. Installed locally via symlinks into all 5 agents. Private repo: https://github.com/rshokhnur/skills. (Updated 2026-09-08)
 
 ---
 
@@ -93,17 +93,17 @@ Statuses: `idea → drafting → testing → shipped`
 
 ## Publishing plan
 
-- **Phase 1 — build (now):** write skills, use them locally, keep the repo private-ish.
+- **Phase 1 — build (now):** write skills, use them locally; private repo at github.com/rshokhnur/skills (created 2026-09-08).
 - **Phase 2 — GitHub:** once ~5 skills are `shipped`: public repo, README with install instructions, MIT license (TBC).
 - **Phase 3 — installer:** `npx @<scope>/install`-style CLI that detects agents and copies skills into `~/.claude/skills`, `~/.cursor/skills`, `~/.codex/skills`, `~/.config/opencode/skills`, `~/.gemini/skills`.
 
 ## Open questions
 
-- [ ] Project name (also becomes the npm scope + GitHub repo name)
+- [x] Project name → `skills` (2026-09-08); GitHub: rshokhnur/skills (private until ~5 skills shipped); npm scope TBD at Phase 3
 - [ ] Author byline for published skills
 - [ ] License — MIT?
 - [x] Which skill do we write first? → `ux-writing` (2026-08-28)
-- [x] `git init` → done 2026-09-08 (branch `main`, no commits yet)
+- [x] `git init` → done 2026-09-08; first commit + push to GitHub same day
 
 ## Learnings log
 
