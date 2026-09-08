@@ -99,7 +99,13 @@ The design systems are unanimous: **rewrite shorter or wrap first; truncate only
 - Filenames, IDs, addresses → **middle truncation**: the distinguishing part is usually the end ("…-v2.pdf"); JS measurement, not CSS (CSS has no middle ellipsis).
 - Long expandable prose → **fade-out + expand control**: Baymard found users mistake truncated content for complete content and abandon — a fade signals continuation better than an ellipsis. Show the fade only on true overflow; the expand control must look like a control and sit directly below.
 
+**Short strings wrap, they don't truncate.** A command, email, or ID under ~40 characters wraps to two lines at narrow widths (`overflow-wrap: anywhere`) instead of ending in "…" — a cut command is unusable, a wrapped one is still readable and copyable. A copy-to-clipboard button is not a reveal path: it's invisible to a sighted reader.
+
 **Accessibility of the cut:** the `title` attribute is never the reveal mechanism — invisible to keyboard, touch, and voice. CSS truncation leaves the full text in the DOM (screen readers read it all), so the reveal is for sighted users: a disclosure/expand beats a tooltip. In RTL or mixed-direction text, set `dir="auto"` / wrap user content in `<bdi>` or the ellipsis renders on the wrong side.
+
+## Horizontal scrollers — chips, tabs, carousels
+
+An overflowing strip must signal that it continues: a trailing fade mask (`mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent)`), or the next item visibly peeking, plus end padding so the last item can scroll fully into view. Never a hard cut mid-word at the viewport edge — users read a cut chip as truncation or a bug and stop (Baymard: cut content reads as complete or broken). Hiding the scrollbar is fine only when a fade replaces the signal it removed.
 
 ## Line length and alignment
 
@@ -128,6 +134,7 @@ Text layout isn't done when it fits your language at your zoom level:
 5. **Orphan sweep:** view headings at three widths; no lone last words.
 6. **`dir="rtl"` smoke test:** ellipses, alignment, and icons land on the correct side.
 7. **Find-in-page still works** on glued text (no U+2011 where a nowrap span would do).
+8. **Fixed chrome covers nothing:** docks, bars, and floating controls never sit on the last line of content — every route (404 and error included) reserves bottom padding ≥ the element's height plus the safe area.
 
 ## Going deeper
 
