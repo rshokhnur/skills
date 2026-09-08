@@ -4,7 +4,7 @@
 >
 > This is the living document for the project. Every working session that creates or changes a skill should also update this file: the inventory, the decisions, and the learnings log. It gets smarter as the collection grows.
 
-**Status:** 2 skills drafted and in testing (`ux-writing`, `text-layout`), ~110 sources archived. Installed locally via symlinks into all 5 agents. Private repo: https://github.com/rshokhnur/skills. (Updated 2026-09-08)
+**Status:** 2 skills drafted and in testing (`ux-writing`, `text-layout`), ~110 sources archived. Installed locally via symlinks into all 5 agents; installable anywhere via `npx skills@latest add rshokhnur/skills`. Private repo: https://github.com/rshokhnur/skills. (Updated 2026-09-08)
 
 ---
 
@@ -35,8 +35,14 @@
 | 2026-08-28 | Content = my taste + curated masters + per-topic research, blended per skill | Interview me for opinions, synthesize published wisdom (HIG, Refactoring UI, Emil Kowalski, …) in my own words, research to fill gaps |
 | 2026-08-28 | Raw research reports live in `skills/<name>/research/`, kept in the repo but excluded from installs | Research is reusable when refining a skill later; shipping it would bloat installs and dilute the skill |
 | 2026-08-28 | Skills stay small and focused — one per aspect; big topics split into siblings (text → `ux-writing` / `text-layout` / `typography`) | The user's explicit call: "useful small (not too small) skills for each aspect." Matches the animations.dev model; mega-skills dilute attention |
-| 2026-08-28 | Research convention v2: full-fidelity per-source extraction files in `skills/<name>/research/sources/` — one file per source, exhaustive, in our own words (quotes <15 words), committed to git, never published or installed | Distilled reports lose the detail needed for later refinement. Verbatim full copies would be copyright infringement once the repo goes public — exhaustive extraction keeps the fidelity without republishing anyone's text |
+| 2026-08-28 | Research convention v2: full-fidelity per-source extraction files, one file per source, exhaustive, in our own words (quotes <15 words), committed to git, never installed. Path moved 2026-09-08 to top-level `research/<name>/sources/` | Distilled reports lose the detail needed for later refinement. Verbatim full copies would be copyright infringement once the repo goes public — exhaustive extraction keeps the fidelity without republishing anyone's text |
 | 2026-09-08 | Local install = symlinks from every agent's skill folder (`~/.claude/skills`, `~/.cursor/skills`, `~/.codex/skills`, `~/.config/opencode/skills`, `~/.gemini/skills`) to `skills/<name>` in this repo | Edits in the repo are live in every agent instantly — the right loop while skills are in testing. The future npx installer copies instead; symlinks are the dev-mode equivalent |
+| 2026-09-08 | Installer = the universal skills.sh CLI (`npx skills@latest add rshokhnur/skills`); no custom npx installer | Verified on our repo: discovers `skills/*/SKILL.md`, installs to 20+ agents, lockfile + updates. Building our own would duplicate it |
+| 2026-09-08 | Research lives at top-level `research/<skill>/`, never inside `skills/` | The installer copies the entire skill folder — verified: 41 research files landed in a test install |
+| 2026-09-08 | Reference files are UPPERCASE siblings of SKILL.md (`COMPONENTS.md`, `CSS-RECIPES.md`); no `references/` subfolder | emilkowalski/skills convention — flat, visually distinct from SKILL.md, what the ecosystem expects |
+| 2026-09-08 | Skill body skeleton: scope with sibling delegation → Operating posture → Hard rules → process/decision trees → checks → reference links | Emil's shape. Posture sets the bar and bans option-menus; numbered absolutes at the top are the rules agents obey most reliably |
+| 2026-09-08 | Descriptions keep their trigger lists until real-world testing shows over- or under-triggering | The description is the only thing an agent reads to decide invocation — changing it blind is a gamble; testing produces the data |
+| 2026-09-08 | License: MIT | Standard for skills repos; permissive copying is the point of publishing |
 
 ## Planned repo structure
 
@@ -44,12 +50,16 @@
 Skills/
 ├── PROJECT.md          # this file — the living doc
 ├── CLAUDE.md           # instructions for Claude sessions in this repo
-├── README.md           # public-facing, written when we publish
-├── skills/             # source of truth
+├── README.md           # public-facing
+├── LICENSE             # MIT
+├── skills/             # installable — exactly what `npx skills add` copies
 │   └── <skill-name>/
-│       ├── SKILL.md    # the skill itself
-│       └── references/ # optional supporting files the skill points to
-└── installer/          # the npx package, built in Phase 3
+│       ├── SKILL.md    # scope → posture → hard rules → process → checks
+│       └── RECIPES.md  # optional UPPERCASE reference files beside SKILL.md
+└── research/           # never installed — full-fidelity source extractions
+    └── <skill-name>/
+        ├── 0N-*.md     # distilled slices
+        └── sources/    # one file per source, URL + access date
 ```
 
 ## Skill format conventions
@@ -94,20 +104,22 @@ Statuses: `idea → drafting → testing → shipped`
 ## Publishing plan
 
 - **Phase 1 — build (now):** write skills, use them locally; private repo at github.com/rshokhnur/skills (created 2026-09-08).
-- **Phase 2 — GitHub:** once ~5 skills are `shipped`: public repo, README with install instructions, MIT license (TBC).
-- **Phase 3 — installer:** `npx @<scope>/install`-style CLI that detects agents and copies skills into `~/.claude/skills`, `~/.cursor/skills`, `~/.codex/skills`, `~/.config/opencode/skills`, `~/.gemini/skills`.
+- **Phase 2 — GitHub:** once ~5 skills are `shipped`: flip github.com/rshokhnur/skills to public, add the skills.sh badge. README and MIT license already in place (2026-09-08).
+- **Phase 3 — installer: solved for free.** `npx skills@latest add rshokhnur/skills` (the skills.sh CLI: 20+ agents, symlink or copy, lockfile, updates) — verified 2026-09-08. No custom installer. Optional someday: an extended/paid tier via our own installer, the way animations.dev layers over its public repo.
 
 ## Open questions
 
 - [x] Project name → `skills` (2026-09-08); GitHub: rshokhnur/skills (private until ~5 skills shipped); npm scope TBD at Phase 3
 - [ ] Author byline for published skills
-- [ ] License — MIT?
+- [x] License → MIT (2026-09-08); LICENSE names the GitHub handle — swap in a legal name before going public if preferred
 - [x] Which skill do we write first? → `ux-writing` (2026-08-28)
 - [x] `git init` → done 2026-09-08; first commit + push to GitHub same day
 
 ## Learnings log
 
 Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-09-08 — Repo design aligned with emilkowalski/skills; installer problem solved for free.** Studied Emil's public repo: flat `skills/<name>/SKILL.md` + UPPERCASE references, frontmatter = name + description only (`disable-model-invocation` for deliberately-invoked skills), MIT, `.gitattributes`, no installer code — he uses the universal `skills` CLI. Ours was already discoverable by it, so Phase 3 is deleted. Caught only by running a real install: the CLI copies the whole skill folder, so `research/` moved to top level. Retrofitted Operating posture + Hard rules to both skills. Left descriptions untouched pending trigger data. Lesson: test the install path, not just the file layout — a "compatible" repo was shipping 41 research files per install.
 
 - **2026-08-28 — Skill #2 (`text-layout`) drafted; sources convention proven.** ~100 full-fidelity source extractions now in `research/sources/` across both skills (39 text-layout, ~60 ux-writing incl. backfill). The backfill's accuracy audit justified the whole convention: it caught that summaries had drifted from sources — the 52%/8% tone stat's real meaning, the 12%/81% permission numbers' attribution (Tan et al.), NN/g's ~2–9s spinner band, "no preselected default" in dialogs (NN/g + current HIG), and that the oft-quoted HIG alert-pronoun ban is legacy, removed from current HIG. Lesson: popular summaries of style guides lag the guides themselves — extract from the live source, date the access, and re-verify "famous" rules before encoding them. Also learned: agents writing files incrementally survive usage-limit kills with zero loss — make write-as-you-go a standing instruction for research agents.
 

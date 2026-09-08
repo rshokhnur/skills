@@ -7,6 +7,19 @@ description: Write and review interface copy — microcopy, buttons, errors, emp
 
 Interface copy is design material, not decoration: rewriting the same page to be concise + scannable + objective measured a **+124% usability gain** (NN/g). This skill encodes how to write every user-facing string in a product or functional site UI. Persuasion-first marketing pages are a different job — not this skill.
 
+## Operating posture
+
+You are a senior UX writer who reads the research. Make the call and write the string — never hand the user three options and ask which they prefer. Give the reasoning in one line, and only when the choice isn't obvious. The bar: every string passes first-pass review at a product that takes words seriously.
+
+## Hard rules
+
+1. **Run the process in order** — surface → moment → voice → skeleton → edit → checks. Naming the surface first is what stops you freestyling a pattern that already has a formula.
+2. **Never Yes / No / OK / Got it as the answer to a real question.** Buttons echo the verb + object. Users click assent words from muscle memory without reading; that reflex is how data gets destroyed.
+3. **Never blame the user.** No "invalid", "illegal", "failed to", "you forgot". An error says what happened and how to fix it — the design failed, not the person.
+4. **No interjections anywhere; no exclamation marks in failure paths.** "Oops!" mocks a frustrated user and reads as insincere the second time it appears.
+5. **Front-load every string.** The first two words carry the message; most users read little else.
+6. **An explicit brand voice beats this skill's defaults.** The default voice exists for products without one — overriding a documented voice is a defect, not a judgment call.
+
 ## Ground truth — why every rule below exists
 
 - **79% of users scan; 16% read word-by-word. At best they read 28% of the words on a page.** Copy that requires linear reading fails 4 out of 5 users. [NN/g]
@@ -16,7 +29,7 @@ Interface copy is design material, not decoration: rewriting the same page to be
 
 ## The process — walk it every time
 
-1. **Name the surface.** Which pattern is this string: button, error, empty state, dialog, toast, notification, form field, loading, onboarding, setting? Each has a formula — load [references/components.md](references/components.md) and use it. Never freestyle a pattern that has a formula.
+1. **Name the surface.** Which pattern is this string: button, error, empty state, dialog, toast, notification, form field, loading, onboarding, setting? Each has a formula — load [COMPONENTS.md](COMPONENTS.md) and use it. Never freestyle a pattern that has a formula.
 2. **Read the user's moment.** What just happened, and what is the user feeling — neutral, frustrated (error), anxious (payment, delete), waiting, or successful? This sets tone (table below).
 3. **Choose the voice.** The project has an explicit brand voice or content guide → follow it, including where it contradicts this skill's defaults. No explicit voice → use the default voice below. Never invent a personality per screen.
 4. **Draft with the message skeleton** (below), front-loaded, in the pattern's formula.
@@ -73,7 +86,7 @@ Nearly every interface message is these three parts, in this order — include a
 - **Active voice, present tense, imperative for instructions.** Two sanctioned passive exceptions: (1) errors where active voice would blame the user — "That site can't be found" is deliberately passive; do not "fix" it; (2) headings where passive front-loads the keyword.
 - **Never "please" in buttons or routine instructions** — it adds length and implies the action is optional. Never reflexive "sorry" — reserve one "sorry" for a genuine product-caused failure with real consequences.
 - **Localization-safe by default:** no idioms, puns, or pop-culture ("hit the ground running" → "start quickly"). Expect short strings to grow 2–3× in translation (W3C/IBM data: ≤10-char strings expand 200–300%) — never write copy that only fits exactly. One full sentence per string with named placeholders ("You have {count} new messages"); never concatenate fragments; never "(s)" plural hacks.
-- **Copy owns its line breaks.** No heading, title, or toast strands a single word on its last line (an orphan) — `text-wrap: balance` on headings, rewording as the fallback. Number + unit pairs stay glued on one line ("3 MB", "Jan 24"). Buttons never wrap to two lines — shorten the label, never the font. Full rules: [references/mechanics.md](references/mechanics.md).
+- **Copy owns its line breaks.** No heading, title, or toast strands a single word on its last line (an orphan) — `text-wrap: balance` on headings, rewording as the fallback. Number + unit pairs stay glued on one line ("3 MB", "Jan 24"). Buttons never wrap to two lines — shorten the label, never the font. Full rules: [MECHANICS.md](MECHANICS.md).
 - **Accessibility is copy's job too:** links describe their destination out of context (WCAG 2.4.4); instructions never lean on color, shape, or position — "Select **Save**", not "the green button below" (WCAG 1.3.3); error messages carry a hidden "Error:" prefix for screen readers.
 
 ## Mechanics defaults
@@ -138,6 +151,6 @@ If the action itself is "cancel" (a reservation, a subscription), no button may 
 
 ## Going deeper
 
-- Per-surface formulas with examples — buttons, forms, errors, empty states, dialogs, toasts, loading, notifications, onboarding: [references/components.md](references/components.md)
-- Defining a product voice, tone words, the voice chart, celebration/humor gates, testing copy with users: [references/voice-and-tone.md](references/voice-and-tone.md)
-- Full mechanics, i18n expansion numbers, accessibility rules, and the documented disagreements between the major style guides: [references/mechanics.md](references/mechanics.md)
+- Per-surface formulas with examples — buttons, forms, errors, empty states, dialogs, toasts, loading, notifications, onboarding: [COMPONENTS.md](COMPONENTS.md)
+- Defining a product voice, tone words, the voice chart, celebration/humor gates, testing copy with users: [VOICE-AND-TONE.md](VOICE-AND-TONE.md)
+- Full mechanics, i18n expansion numbers, accessibility rules, and the documented disagreements between the major style guides: [MECHANICS.md](MECHANICS.md)

@@ -1,6 +1,6 @@
 # CSS recipes — copy-paste implementations
 
-Verified patterns with their gotchas attached. Sources: MDN, CSSWG, Chrome/WebKit engine docs, Comeau, Shadeed, CSS-Tricks, Working Concept. Full extractions in `../research/sources/`.
+Verified patterns with their gotchas attached. Sources: MDN, CSSWG, Chrome/WebKit engine docs, Comeau, Shadeed, CSS-Tricks, Working Concept. Full source extractions live in the source repo at `research/text-layout/sources/` (github.com/rshokhnur/skills) — not shipped with the skill.
 
 ## The baseline reset
 

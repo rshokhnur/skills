@@ -1,6 +1,6 @@
 # Guidelines & evidence — design systems, WCAG, research, i18n
 
-The rules' provenance and the per-system positions, for when a decision needs backing or a platform overrides the default. Full extractions in `../research/sources/`.
+The rules' provenance and the per-system positions, for when a decision needs backing or a platform overrides the default. Full source extractions live in the source repo at `research/text-layout/sources/` (github.com/rshokhnur/skills) — not shipped with the skill.
 
 ## Design-system truncation matrix
 

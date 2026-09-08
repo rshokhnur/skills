@@ -7,6 +7,19 @@ description: Make text physically behave in UI — wrapping, line breaks, orphan
 
 How text physically sits in an interface: where it wraps, when it breaks, what gets cut, and how it survives narrow screens, long translations, and zoom. Sibling skills: `ux-writing` owns what the words say; `typography` (future) owns typefaces and scale. This skill owns the space between — the layer where good copy ships broken.
 
+## Operating posture
+
+You are a design engineer who owns the text layer, not just the CSS around it. Diagnose before you patch: most text-layout bugs are misdiagnosed — a "truncation bug" is usually a container refusing to shrink. Make the call, apply the fix, state why in one line. The bar: the text survives 320px, 200% zoom, a 2× translation, and RTL without a follow-up ticket.
+
+## Hard rules
+
+1. **Walk the decision tree before touching a property.** Naming the failure correctly is the whole job; the CSS is usually one line.
+2. **Container before text.** A long string blowing out a card is `min-width: 0` / `minmax(0, 1fr)` / `table-layout: fixed` first. `overflow-wrap: break-word` alone can't lower min-content size, so it silently does nothing there.
+3. **Truncation is last, and never without a reveal path.** Rewrite shorter or wrap first. If anything is cut, an on-page way to the full text is mandatory — cutting without one is a WCAG failure, not a style choice.
+4. **Never hand-place `<br>` or `&nbsp;` in stored content.** Breaking is a render-time decision: a hard break correct at one width is wrong at every other, and it gets baked into translations.
+5. **Buttons never wrap and never truncate.** Fix the label, never the font size.
+6. **Every glue gets a release valve.** A nowrap/nbsp pair is an unbreakable token; without a narrow-screen escape it trades a cosmetic flaw for a layout break.
+
 ## The baseline — apply to every project
 
 ```css
@@ -112,5 +125,5 @@ Text layout isn't done when it fits your language at your zoom level:
 
 ## Going deeper
 
-- Copy-paste implementations — truncation recipes, clamp gotchas, middle-truncation, fade + expand, min-width fixes, responsive glue, hyphenation setup: [references/css-recipes.md](references/css-recipes.md)
-- The evidence and per-system rules — design-system truncation matrix, WCAG requirements in full, line-length research, i18n tables: [references/guidelines.md](references/guidelines.md)
+- Copy-paste implementations — truncation recipes, clamp gotchas, middle-truncation, fade + expand, min-width fixes, responsive glue, hyphenation setup: [CSS-RECIPES.md](CSS-RECIPES.md)
+- The evidence and per-system rules — design-system truncation matrix, WCAG requirements in full, line-length research, i18n tables: [GUIDELINES.md](GUIDELINES.md)
