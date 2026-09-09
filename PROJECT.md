@@ -4,7 +4,7 @@
 >
 > This is the living document for the project. Every working session that creates or changes a skill should also update this file: the inventory, the decisions, and the learnings log. It gets smarter as the collection grows.
 
-**Status:** 2 skills drafted and in testing (`ux-writing`, `text-layout`), ~110 sources archived. Installed locally via symlinks into all 5 agents; installable anywhere via `npx skills@latest add rshokhnur/skills`. Private repo: https://github.com/rshokhnur/skills. (Updated 2026-09-08)
+**Status:** 2 skills **shipped** (`ux-writing`, `text-layout` — 2026-09-09), ~110 sources archived, 3 tests in tests/. Installed locally via symlinks into all 5 agents; installable anywhere via `npx skills@latest add rshokhnur/skills`. Private repo: https://github.com/rshokhnur/skills. (Updated 2026-09-08)
 
 ---
 
@@ -42,6 +42,7 @@
 | 2026-09-08 | Reference files are UPPERCASE siblings of SKILL.md (`COMPONENTS.md`, `CSS-RECIPES.md`); no `references/` subfolder | emilkowalski/skills convention — flat, visually distinct from SKILL.md, what the ecosystem expects |
 | 2026-09-08 | Skill body skeleton: scope with sibling delegation → Operating posture → Hard rules → process/decision trees → checks → reference links | Emil's shape. Posture sets the bar and bans option-menus; numbered absolutes at the top are the rules agents obey most reliably |
 | 2026-09-08 | Descriptions keep their trigger lists until real-world testing shows over- or under-triggering | The description is the only thing an agent reads to decide invocation — changing it blind is a gamble; testing produces the data |
+| 2026-09-09 | Descriptions stay as they are (trigger lists kept). Shipping bar = two real-project tests + a passed trigger test (fresh agents, 3 positive + 1 negative control) | Trigger test #3: 4/4 — fired on vague phrasing, stayed out of persuasion copy. Data beats taste on this one |
 | 2026-09-08 | License: MIT | Standard for skills repos; permissive copying is the point of publishing |
 
 ## Planned repo structure
@@ -80,7 +81,7 @@ Skills/
 2. **Interview** — Claude grills me for my actual opinions, rules, and pet peeves on the topic. My answers are the spine.
 3. **Curate & research** — pull in the best published thinking; it supports my taste, never replaces it.
 4. **Draft** the SKILL.md (load the `writing-skills` skill first).
-5. **Test by running** — use it on real tasks; a skill that doesn't change the output gets rewritten or killed.
+5. **Test by running** — two real projects of different kinds (reports in `tests/`), then a trigger test: fresh subagents, natural tasks, no skill named, at least one negative control. A skill that doesn't change the output, or doesn't fire when it should, gets rewritten or killed.
 6. **Ship** — mark it `shipped` in the inventory.
 7. **Log** — add what we learned to the Learnings log below.
 
@@ -88,8 +89,8 @@ Skills/
 
 | Skill | Pillar | Status | Notes |
 |---|---|---|---|
-| `ux-writing` | Product & UX | testing | Interface copy only (marketing copy = later skill). Default voice: Apple-calm (minimal, plain, no exclamation) + tone-adaptation procedure by user emotional state. SKILL.md + references/. Research: NN/g, Baymard, IxDF, UX Collective, Material, HIG, Microsoft, Mailchimp, Polaris, GOV.UK, Podmajersky, Yifrah, Saito. 71 source extractions in research/. **Tests:** #1 medical-team prototype (12 findings, 3 refinements) · #2 portfolio site (6 findings, 3 refinements; scope discipline + brand-voice override confirmed) — see tests/ |
-| `text-layout` | Design engineering | testing | Skill #2, born from the orphans question. How text physically sits in UI: wrapping, breaking, orphans (`text-wrap: balance/pretty`), glue pairs, truncation/`line-clamp`, overflow, line length, alignment/rag, i18n text behavior (CJK/RTL/expansion). Sibling of `ux-writing` (words) and future `typography` (typefaces/scale). Research: MDN/web.dev/CSSWG, Comeau, Shadeed, Butterick, Rutter, NN/g, Baymard, WCAG, W3C i18n — 41 source extractions in research/. **Tests:** #1 medical-team prototype (4 findings incl. an orphan-producing layout bug, 2 refinements) · #2 portfolio site (4 findings: cut chip strip, dock covering footer, truncated command; 3 refinements) — see tests/ |
+| `ux-writing` | Product & UX | **shipped** (2026-09-09) | Interface copy only (marketing copy = later skill). Default voice: Apple-calm (minimal, plain, no exclamation) + tone-adaptation procedure by user emotional state. SKILL.md + references/. Research: NN/g, Baymard, IxDF, UX Collective, Material, HIG, Microsoft, Mailchimp, Polaris, GOV.UK, Podmajersky, Yifrah, Saito. 71 source extractions in research/. **Tests:** #1 medical-team prototype (12 findings, 3 refinements) · #2 portfolio site (6 findings, 3 refinements; scope discipline + brand-voice override confirmed) — see tests/ |
+| `text-layout` | Design engineering | **shipped** (2026-09-09) | Skill #2, born from the orphans question. How text physically sits in UI: wrapping, breaking, orphans (`text-wrap: balance/pretty`), glue pairs, truncation/`line-clamp`, overflow, line length, alignment/rag, i18n text behavior (CJK/RTL/expansion). Sibling of `ux-writing` (words) and future `typography` (typefaces/scale). Research: MDN/web.dev/CSSWG, Comeau, Shadeed, Butterick, Rutter, NN/g, Baymard, WCAG, W3C i18n — 41 source extractions in research/. **Tests:** #1 medical-team prototype (4 findings incl. an orphan-producing layout bug, 2 refinements) · #2 portfolio site (4 findings: cut chip strip, dock covering footer, truncated command; 3 refinements) — see tests/ |
 
 Statuses: `idea → drafting → testing → shipped`
 
@@ -118,6 +119,8 @@ Statuses: `idea → drafting → testing → shipped`
 ## Learnings log
 
 Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-09-09 — Trigger test passed 4/4; `ux-writing` and `text-layout` shipped.** Fresh subagents (same roster as a user session, no skill named) invoked the right skill on three natural tasks — including a jargon-free "one word sits alone on the second line" — and correctly skipped `ux-writing` for persuasion headlines, citing the description's own exclusion. Lessons: (1) subagents are a cheap, honest trigger test — they see only the description, exactly like a user's session; (2) the "Not for…" clause is load-bearing: it's what kept the skill out of marketing copy; (3) the shipping bar is now written down: two real-project tests + a passed trigger test. Report: tests/2026-09-09-trigger-test.md
 
 - **2026-09-08 — Test #2 (portfolio site, whole site).** The opposite subject from test #1: a site that already applies the text-layout baseline by hand and has sparse, deliberate copy. Both skills held scope — ux-writing left the bio and essays alone and its brand-voice override cleared two deliberate deviations without edits — and still found real defects the source hid: a chip strip hard-cut mid-word, the floating dock covering the 404 footer, an install command truncated to clipboard-only. Six refinements. Lessons: (1) a second, *different* kind of project is what exposes missing categories — horizontal scrollers and fixed chrome never came up in a phone-frame prototype; (2) rendering finds what grep can't: every layout finding here was invisible in the source; (3) the override rule is load-bearing on opinionated sites — without it the skill would have "fixed" the site's voice. Report: tests/2026-09-08-portfolio-site.md
 
