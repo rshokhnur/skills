@@ -43,6 +43,7 @@
 | 2026-09-08 | Skill body skeleton: scope with sibling delegation → Operating posture → Hard rules → process/decision trees → checks → reference links | Emil's shape. Posture sets the bar and bans option-menus; numbered absolutes at the top are the rules agents obey most reliably |
 | 2026-09-08 | Descriptions keep their trigger lists until real-world testing shows over- or under-triggering | The description is the only thing an agent reads to decide invocation — changing it blind is a gamble; testing produces the data |
 | 2026-09-09 | Descriptions stay as they are (trigger lists kept). Shipping bar = two real-project tests + a passed trigger test (fresh agents, 3 positive + 1 negative control) | Trigger test #3: 4/4 — fired on vague phrasing, stayed out of persuasion copy. Data beats taste on this one |
+| 2026-10-05 | Research moves to a private repo (`rshokhnur/skills-research`, cloned at `./research`, gitignored); test reports stay public in `tests/` with clients anonymised; public history rewritten to remove both | Exhaustive extractions of paid books and paywalled research can substitute for the original — a copyright risk once public. A test report named a client project. Emil publishes skills only |
 | 2026-10-05 | Every skill opens with `## Initial Response` (one fixed sentence on bare invocation) and ends with `## Invocation Variants` + `## Required Output Format` (findings / decisions for you / what held up) | Emil's house conventions as of Oct 2026, present in all 14 of his skills. Bare `/skill` calls stop dumping the whole skill; reviews come back in one comparable shape |
 | 2026-09-08 | License: MIT | Standard for skills repos; permissive copying is the point of publishing |
 
@@ -58,7 +59,8 @@ Skills/
 │   └── <skill-name>/
 │       ├── SKILL.md    # scope → posture → hard rules → process → checks
 │       └── RECIPES.md  # optional UPPERCASE reference files beside SKILL.md
-└── research/           # never installed — full-fidelity source extractions
+├── tests/              # public test reports (clients anonymised)
+└── research/           # gitignored clone of the PRIVATE repo rshokhnur/skills-research
     └── <skill-name>/
         ├── 0N-*.md     # distilled slices
         └── sources/    # one file per source, URL + access date
@@ -120,6 +122,8 @@ Statuses: `idea → drafting → testing → shipped`
 ## Learnings log
 
 Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-10-05 — Pulled research out of the public repo the same day it went public.** Two problems surfaced on review: exhaustive source extractions of paid books are close to substitutes (my earlier "copyright-safe because own words" call was too confident), and test #1's report named a client project. Fix: research → private repo with full history; public history rewritten with git filter-repo to drop sources and scrub the client name from files and commit messages, then force-pushed. Lesson: run a publish review — client names, paid sources, credentials — *before* flipping visibility, not after.
 
 - **2026-10-05 — Repo made public at 2 shipped skills** (the plan said ~5; the user chose to launch early so real users can surface trigger and taste gaps). Verified a fresh `npx skills add rshokhnur/skills` finds both skills.
 

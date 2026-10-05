@@ -27,7 +27,7 @@ Each of those is small. Together they're the difference between an interface tha
 
 ## How they're built
 
-Each skill is grounded in primary sources — the research (NN/g, Baymard), the style guides (Apple, Material, Microsoft, Mailchimp, Polaris, GOV.UK), the specs, the books — extracted in full into `research/` before a single rule is written, then shaped by my own taste. Rules carry their reasoning so an agent can extend them to cases the skill never mentions.
+Each skill is grounded in primary sources — the research (NN/g, Baymard), the style guides (Apple, Material, Microsoft, Mailchimp, Polaris, GOV.UK), the specs, and the books — read in full before a single rule is written, then shaped by my own taste. Rules carry their reasoning so an agent can extend them to cases the skill never mentions. The source notes stay private; the test reports are public in [`tests/`](./tests).
 
 ## Status
 
