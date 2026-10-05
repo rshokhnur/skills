@@ -4,7 +4,7 @@
 >
 > This is the living document for the project. Every working session that creates or changes a skill should also update this file: the inventory, the decisions, and the learnings log. It gets smarter as the collection grows.
 
-**Status:** 2 skills **shipped** (`ux-writing`, `text-layout` — 2026-09-09), ~110 sources archived, 3 tests in tests/. Installed locally via symlinks into all 5 agents; installable anywhere via `npx skills@latest add rshokhnur/skills`. Private repo: https://github.com/rshokhnur/skills. (Updated 2026-09-08)
+**Status:** 2 skills **shipped** (`ux-writing`, `text-layout` — 2026-09-09), ~110 sources archived, 3 tests in tests/. Installed locally via symlinks into all 5 agents; installable anywhere via `npx skills@latest add rshokhnur/skills`. Public repo: https://github.com/rshokhnur/skills (public since 2026-10-05). (Updated 2026-09-08)
 
 ---
 
@@ -120,6 +120,8 @@ Statuses: `idea → drafting → testing → shipped`
 ## Learnings log
 
 Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-10-05 — Repo made public at 2 shipped skills** (the plan said ~5; the user chose to launch early so real users can surface trigger and taste gaps). Verified a fresh `npx skills add rshokhnur/skills` finds both skills.
 
 - **2026-10-05 — Re-aligned with emilkowalski/skills.** Re-cloned his repo: structure unchanged since Sept, but three sections are now universal in his skills — Initial Response, Invocation Variants, Required Output Format. Added all three to both skills; README gained a "Why use it" section and an honest shipped status. Lesson: a reference repo drifts — re-check it before each release instead of trusting the last analysis.
 
