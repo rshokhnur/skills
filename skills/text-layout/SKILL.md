@@ -5,6 +5,14 @@ description: Make text physically behave in UI — wrapping, line breaks, orphan
 
 # Text Layout
 
+## Initial Response
+
+When this skill is invoked without a specific question, respond only with:
+
+> Show me the text that breaks, or a screen to stress-test. I'll find the cause before touching any CSS.
+
+Do not provide any other information until the user asks.
+
 How text physically sits in an interface: where it wraps, when it breaks, what gets cut, and how it survives narrow screens, long translations, and zoom. Sibling skills: `ux-writing` owns what the words say; `typography` (future) owns typefaces and scale. This skill owns the space between — the layer where good copy ships broken.
 
 ## Operating posture
@@ -135,6 +143,29 @@ Text layout isn't done when it fits your language at your zoom level:
 6. **`dir="rtl"` smoke test:** ellipses, alignment, and icons land on the correct side.
 7. **Find-in-page still works** on glued text (no U+2011 where a nowrap span would do).
 8. **Fixed chrome covers nothing:** docks, bars, and floating controls never sit on the last line of content — every route (404 and error included) reserves bottom padding ≥ the element's height plus the safe area.
+
+## Invocation Variants
+
+| Invocation | Behavior |
+| --- | --- |
+| `<a specific text bug>` | Diagnose with the decision tree, return the fix with one line of why per change |
+| `<screen, component, or route>` | Review: render at 375px and 320px, run the checks, return the report below, then stop |
+| `<screen> + fix` | Review, then apply every fix that isn't in "Decisions for you" |
+| `fix all` / `fix 1, 3` | Apply the named fixes from the last report, re-check at 320px |
+
+## Required Output Format (reviews)
+
+**Part 1 — Findings.** One row per defect, worst first. Severity: **Broken** (text unreadable or cut with no reveal, horizontal scroll, content hidden), **Ugly** (readable but visibly wrong: orphan, split pair, collapsed column), **Fragile** (fine today, breaks at 2× length, 200% zoom, or RTL).
+
+| # | Severity | Where | What renders | Diagnosis | Fix |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Ugly | Result rows | Subtitle strands one word per line at 320px | Nowrap sibling hogs the width | Let the sibling wrap; `text-wrap: pretty` on the column |
+
+Diagnosis names the decision-tree branch — the cause, not the symptom. Include `file:line` for each fix.
+
+**Part 2 — Decisions for you.** Wrap or truncate for a field, stack or shrink a row at narrow widths, where a reveal path goes. One line each, with a recommendation.
+
+**Part 3 — What held up.** Checks the screen already passes (320px reflow, balanced headings, glued pairs). Shows the test was real.
 
 ## Going deeper
 

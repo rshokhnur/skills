@@ -14,6 +14,12 @@ npx skills@latest add rshokhnur/skills
 
 Works with Claude Code, Cursor, Codex, OpenCode, Gemini CLI, and 20+ other agents.
 
+## Why use it?
+
+Agents don't have taste. They know every pattern and pick the median one: "Successfully saved!" in a toast, "Are you sure?" with OK and Cancel, `text-overflow: ellipsis` that never draws because the flex item refuses to shrink, a heading that strands its last word on a line of its own.
+
+Each of those is small. Together they're the difference between an interface that feels made and one that feels generated. These skills list the mistakes, explain why each one is a mistake, and give the agent a procedure to get it right — tested on real products, not just written down.
+
 ## Skills
 
 - **[ux-writing](./skills/ux-writing/SKILL.md)** — Write and review interface copy: buttons, errors, empty states, dialogs, notifications, onboarding. A calm, minimal default voice that yields to your brand voice, tone that adapts to what the user is feeling, and a banned list of the words that make products feel cheap.
@@ -25,7 +31,7 @@ Each skill is grounded in primary sources — the research (NN/g, Baymard), the 
 
 ## Status
 
-Early. Two skills, both in real-world testing. More as they earn their place.
+Two skills, both shipped. Each one passed two tests on real products and a trigger test, where fresh agents with no skill named had to pick it up on their own. Test reports are in `tests/`. More skills as they earn their place.
 
 ## License
 

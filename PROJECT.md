@@ -43,6 +43,7 @@
 | 2026-09-08 | Skill body skeleton: scope with sibling delegation → Operating posture → Hard rules → process/decision trees → checks → reference links | Emil's shape. Posture sets the bar and bans option-menus; numbered absolutes at the top are the rules agents obey most reliably |
 | 2026-09-08 | Descriptions keep their trigger lists until real-world testing shows over- or under-triggering | The description is the only thing an agent reads to decide invocation — changing it blind is a gamble; testing produces the data |
 | 2026-09-09 | Descriptions stay as they are (trigger lists kept). Shipping bar = two real-project tests + a passed trigger test (fresh agents, 3 positive + 1 negative control) | Trigger test #3: 4/4 — fired on vague phrasing, stayed out of persuasion copy. Data beats taste on this one |
+| 2026-10-05 | Every skill opens with `## Initial Response` (one fixed sentence on bare invocation) and ends with `## Invocation Variants` + `## Required Output Format` (findings / decisions for you / what held up) | Emil's house conventions as of Oct 2026, present in all 14 of his skills. Bare `/skill` calls stop dumping the whole skill; reviews come back in one comparable shape |
 | 2026-09-08 | License: MIT | Standard for skills repos; permissive copying is the point of publishing |
 
 ## Planned repo structure
@@ -119,6 +120,8 @@ Statuses: `idea → drafting → testing → shipped`
 ## Learnings log
 
 Newest first. What we learned about writing skills, from writing skills.
+
+- **2026-10-05 — Re-aligned with emilkowalski/skills.** Re-cloned his repo: structure unchanged since Sept, but three sections are now universal in his skills — Initial Response, Invocation Variants, Required Output Format. Added all three to both skills; README gained a "Why use it" section and an honest shipped status. Lesson: a reference repo drifts — re-check it before each release instead of trusting the last analysis.
 
 - **2026-09-09 — Trigger test passed 4/4; `ux-writing` and `text-layout` shipped.** Fresh subagents (same roster as a user session, no skill named) invoked the right skill on three natural tasks — including a jargon-free "one word sits alone on the second line" — and correctly skipped `ux-writing` for persuasion headlines, citing the description's own exclusion. Lessons: (1) subagents are a cheap, honest trigger test — they see only the description, exactly like a user's session; (2) the "Not for…" clause is load-bearing: it's what kept the skill out of marketing copy; (3) the shipping bar is now written down: two real-project tests + a passed trigger test. Report: tests/2026-09-09-trigger-test.md
 

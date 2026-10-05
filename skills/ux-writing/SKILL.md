@@ -5,6 +5,14 @@ description: Write and review interface copy — microcopy, buttons, errors, emp
 
 # UX Writing
 
+## Initial Response
+
+When this skill is invoked without a specific question or string, respond only with:
+
+> Send me a screen, a flow, or a string. I'll write or review the copy against the research on how people actually read interfaces.
+
+Do not provide any other information until the user asks.
+
 Interface copy is design material, not decoration: rewriting the same page to be concise + scannable + objective measured a **+124% usability gain** (NN/g). This skill encodes how to write every user-facing string in a product or functional site UI. Persuasion-first marketing pages are a different job — not this skill.
 
 ## Operating posture
@@ -152,6 +160,31 @@ If the action itself is "cancel" (a reservation, a subscription), no button may 
 4. **Consistency grep:** same action → same word across the whole surface; no "my"/"your" mixing; one capitalization system; scale and status words in one grammatical form ("Low / Normal / High" — never an imperative like "Pay attention" among states, which reads as an instruction the user can't compare to its neighbours; Microsoft: never switch moods mid-sentence). Inconsistency costs even when every string is clear: it creates subconscious friction and erodes trust (UX Writing Hub).
 5. **Promise check:** every number in copy matches the UI it describes ("Step 1 of 4" over 5 progress segments is a bug), and every capability the copy names has a visible control ("edit or delete" needs both buttons). An icon that carries meaning means one thing everywhere — ↗ says "leaves the site"; on an internal link it lies. Words set an expectation and users judge what happens against it; one mismatch shrinks their willingness to trust anything else on the screen (NN/g, link-label research — a label is a promise).
 6. **Truncation, wrap & i18n:** does the layout survive strings 2× longer? Are all strings full sentences with named placeholders? Do headings avoid a stranded last word, and do all buttons sit on one line?
+
+## Invocation Variants
+
+| Invocation | Behavior |
+| --- | --- |
+| `<what the string is for>` | Write it: run the process, return the strings grouped by element, one-line reasoning only where the choice isn't obvious |
+| `<existing screen, file, or strings>` | Review: run the checks, return the report below, then stop |
+| `<screen> + fix` | Review, then apply every fix that isn't in "Decisions for you" |
+| `fix all` / `fix 1, 3` | Apply the named fixes from the last report |
+
+## Required Output Format (reviews)
+
+Every review returns the same three parts, so reports compare across screens and runs.
+
+**Part 1 — Findings.** One row per string, worst first.
+
+| # | Where | Current | Rule that caught it | Rewrite |
+| --- | --- | --- | --- | --- |
+| 1 | Delete dialog | "Are you sure? [OK] [Cancel]" | Verb-echo: assent words get clicked unread | "Delete 'Q3 report'? This cannot be undone." [Delete report] [Cancel] |
+
+Name the rule, not "best practice" — the rule is what lets the user disagree with it. Include `file:line` when the strings live in code.
+
+**Part 2 — Decisions for you.** Calls with more than one right answer (voice register, "my" vs "your" product-wide, dialog vs undo for a borderline action). One line each, with a recommendation and why.
+
+**Part 3 — What held up.** Strings that already pass, and which rule they pass. It shows the review was real and tells the user what not to touch.
 
 ## Going deeper
 
