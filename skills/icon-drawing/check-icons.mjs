@@ -2,11 +2,15 @@
 // check-icons.mjs — numeric checks for UI icon SVGs. No dependencies (Node 18+).
 //
 //   node check-icons.mjs icon.svg [more.svg ...]        lint each file + the set
-//   node check-icons.mjs icons/*.svg --sheet sheet.html  also write a contact sheet to render
+//   node check-icons.mjs icons/*.svg --sheet sheet.html  also write an HTML contact sheet (open via localhost)
+//   node check-icons.mjs icons/*.svg --sheet-svg sheet.svg  one SVG contact sheet to import into Figma or Paper
+//
+//   node check-icons.mjs --pair line.svg filled.svg       a line + filled pair: silhouettes must match
 //
 // Options: --padding <px at 24>  live-area padding, default 2 (scaled to the viewBox)
 //          --gap <px>            minimum gap between separate elements, default = stroke width
-//          --max-parts <n>       hard cap on parts (each primitive or subpath) in stroke icons, default 6
+//          --max-parts <n>       hard cap on parts (each primitive or subpath; identical repeats
+//                                such as rays, ticks or dots count once, up to 8) in stroke icons, default 6
 //
 // Exit code 1 if any ERROR. WARN = look at it, may be intentional. INFO = context.
 
@@ -22,12 +26,15 @@ const opt = (name, dflt) => {
   return v;
 };
 const sheetPath = opt('--sheet', null);
+const sheetSvgPath = opt('--sheet-svg', null);
 const paddingAt24 = Number(opt('--padding', 2));
 const gapOpt = opt('--gap', null);
 const maxParts = Number(opt('--max-parts', 6));
-const files = args.filter((a) => !a.startsWith('--'));
+let pair = null;
+{ const i = args.indexOf('--pair'); if (i !== -1) { pair = [args[i + 1], args[i + 2]]; args.splice(i, 3); if (!pair[1]) { console.log('--pair needs two files: line.svg filled.svg'); process.exit(2); } } }
+const files = [...args.filter((a) => !a.startsWith('--')), ...(pair || [])];
 if (!files.length) {
-  console.log('usage: node check-icons.mjs <file.svg ...> [--sheet out.html] [--padding 2] [--gap 2] [--max-parts 6]');
+  console.log('usage: node check-icons.mjs <file.svg ...> [--sheet out.html] [--sheet-svg out.svg] [--pair line.svg filled.svg] [--padding 2] [--gap 2] [--max-parts 6]');
   process.exit(2);
 }
 
@@ -214,6 +221,26 @@ function polyDist(p, pts) {
   for (let k = 0; k < pts.length - 1; k++) m = Math.min(m, segDist(p, pts[k], pts[k + 1]));
   return m;
 }
+function closestOnPoly(p, pts) {
+  let best = Infinity, bp = pts[0];
+  for (let k = 0; k < pts.length - 1; k++) {
+    const a = pts[k], b = pts[k + 1], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+    let t = L ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L : 0;
+    t = Math.max(0, Math.min(1, t));
+    const q = [a[0] + t * dx, a[1] + t * dy], d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (d < best) { best = d; bp = q; }
+  }
+  if (pts.length === 1) best = Math.hypot(p[0] - pts[0][0], p[1] - pts[0][1]);
+  return [best, bp];
+}
+function inside(p, pts) {
+  let c = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > p[1]) !== (yj > p[1]) && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
 function length(pts) {
   let L = 0;
   for (let k = 0; k < pts.length - 1; k++) L += Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]);
@@ -283,11 +310,14 @@ function checkFile(file) {
   if (maxDec > 3) W(`coordinates with ${maxDec} decimals — round to 3 at most (2 is plenty on a 24 grid)`);
 
   const half = mode === 'stroke' ? sw / 2 : 0;
+  // ink half-width per element: a solid detail with stroke="none" has its ink edge on the path itself
+  const halfOf = (el) => (mode === 'stroke' && el.attrs.stroke !== 'none' ? sw / 2 : 0);
+  const filledOf = (el) => mode === 'stroke' && el.attrs.fill !== undefined && el.attrs.fill !== 'none';
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const { g } of geoms) for (const sp of g.subpaths) for (const [x, y] of sp.pts) {
-    minX = Math.min(minX, x - half); minY = Math.min(minY, y - half);
-    maxX = Math.max(maxX, x + half); maxY = Math.max(maxY, y + half);
-  }
+  for (const { el, g } of geoms) { const h = halfOf(el); for (const sp of g.subpaths) for (const [x, y] of sp.pts) {
+    minX = Math.min(minX, x - h); minY = Math.min(minY, y - h);
+    maxX = Math.max(maxX, x + h); maxY = Math.max(maxY, y + h);
+  } }
   const ink = { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
   out.stats.ink = ink;
   if (minX < -EPS || minY < -EPS || maxX > size + EPS || maxY > size + EPS) E(`ink leaves the canvas (${r2(minX)},${r2(minY)} → ${r2(maxX)},${r2(maxY)}) — it will be clipped`);
@@ -309,10 +339,20 @@ function checkFile(file) {
 
   // complexity
   const subCount = geoms.reduce((n, x) => n + x.g.subpaths.length, 0);
+  // identical repeats (rays, ticks, dots, rings): same closedness, point count and length → one group
+  const groups = new Map();
+  for (const { g } of geoms) for (const sp of g.subpaths) {
+    const key = `${sp.closed}|${sp.pts.length}|${Math.round(length(sp.pts) / 0.05)}`;
+    groups.set(key, (groups.get(key) || 0) + 1);
+  }
+  let parts_ = 0, repeats = 0;
+  for (const n of groups.values()) { parts_ += n > 1 ? 1 + Math.max(0, n - 8) : 1; if (n > 1) repeats += n; }
   out.stats.elements = shapes.length;
   out.stats.subpaths = subCount;
-  out.stats.parts = subCount;
-  if (mode === 'stroke' && subCount > maxParts) E(`${subCount} parts (each primitive or subpath; cap ${maxParts}) — simplify, or pick a metaphor that needs fewer`);
+  out.stats.parts = parts_;
+  out.stats.open = geoms.every(({ el, g }) => el.tag !== 'circle' && el.tag !== 'ellipse' && g.subpaths.every((sp) => !sp.closed));
+  if (repeats) I(`${repeats} identical repeated parts counted as ${[...groups.values()].filter((n) => n > 1).length} (rays, ticks, dots)`);
+  if (mode === 'stroke' && parts_ > maxParts) E(`${parts_} parts (each primitive or subpath, repeats counted once; cap ${maxParts}) — simplify, or pick a metaphor that needs fewer`);
 
   // corner radii on rects
   for (const { el, g } of geoms) if (g.rect && g.rect.rx === 0 && mode === 'stroke') I(`<rect> ${g.rect.w}×${g.rect.h} has sharp corners — the default style rounds every corner except multi-line junctions`);
@@ -321,18 +361,29 @@ function checkFile(file) {
   if (mode === 'stroke') {
     const gap = gapOpt !== null ? Number(gapOpt) : sw;
     const parts = [];
-    geoms.forEach(({ el, g }, ei) => g.subpaths.forEach((sp, si) => parts.push({ name: `${el.tag}#${ei + 1}${g.subpaths.length > 1 ? '.' + (si + 1) : ''}`, pts: sp.pts, dense: densify(sp.pts), closed: sp.closed })));
+    geoms.forEach(({ el, g }, ei) => g.subpaths.forEach((sp, si) => parts.push({ name: `${el.tag}#${ei + 1}${g.subpaths.length > 1 ? '.' + (si + 1) : ''}`, pts: sp.pts, dense: densify(sp.pts), closed: sp.closed, half: halfOf(el), filled: filledOf(el) && sp.closed, sig: `${sp.closed}|${sp.pts.length}|${Math.round(length(sp.pts) / 0.05)}` })));
+    const said = new Map(); // collapse identical findings across repeated parts (rays, ticks)
+    const once = (fn, A, B, kind, val, msg) => { const k = `${kind}|${[A.sig, B.sig].sort().join('/')}|${r2(val)}`; if (said.has(k)) { said.get(k).n++; return; } const rec = { n: 1, fn, msg }; said.set(k, rec); };
+    // is point m covered by the ink of some part other than a and b?
+    const covered = (m, a, b) => parts.some((q, qi) => qi !== a && qi !== b && (polyDist(m, q.pts) <= q.half + EPS || (q.filled && inside(m, q.pts))));
     const TOUCH = 0.02; // closer than this = a deliberate join (computed points carry rounding)
     const flagged = new Set();
     for (let a = 0; a < parts.length; a++) for (let b = a + 1; b < parts.length; b++) {
-      let m = Infinity;
-      for (const p of parts[a].dense) { m = Math.min(m, polyDist(p, parts[b].pts)); if (m < TOUCH) break; }
-      for (const p of parts[b].dense) { if (m < TOUCH) break; m = Math.min(m, polyDist(p, parts[a].pts)); }
-      if (m < TOUCH) continue;
+      const A = parts[a], B = parts[b];
+      // a part lying inside a solid filled part is a deliberate overlap, not a gap
+      if ((A.filled && inside(B.pts[0], A.pts)) || (B.filled && inside(A.pts[0], B.pts))) continue;
+      let m = Infinity, pa = null, pb = null;
+      for (const p of A.dense) { const [d, q] = closestOnPoly(p, B.pts); if (d < m) { m = d; pa = p; pb = q; } if (m < TOUCH) break; }
+      for (const p of B.dense) { if (m < TOUCH) break; const [d, q] = closestOnPoly(p, A.pts); if (d < m) { m = d; pa = q; pb = p; } }
+      if (m < TOUCH) { flagged.add(`${a}|${b}`); continue; } // touching parts: a junction, checked by the shared-point rule
+      const inkGap = m - A.half - B.half; // real distance between ink edges
+      const mid = [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2];
+      if (inkGap < gap - EPS && covered(mid, a, b)) continue; // a third part fills the space: no counter here
       const key = `${a}|${b}`;
-      if (m < sw - EPS) { E(`${parts[a].name} and ${parts[b].name}: centre-lines ${r2(m)} apart, under one stroke width — the inks merge into a blob. Make the shared point identical, or move them ≥ ${r2(sw + gap)} apart`); flagged.add(key); }
-      else if (m < sw + gap - EPS) { W(`${parts[a].name} and ${parts[b].name}: visible gap ${r2(m - sw)}px, minimum ${r2(gap)} — widen it, or fill the counter solid`); flagged.add(key); }
+      if (inkGap < -EPS) { once(E, A, B, 'overlap', inkGap, `${A.name} and ${B.name}: inks overlap by ${r2(-inkGap)} without meeting — they merge into a blob. Make the shared point identical, or move them ≥ ${r2(gap)} apart`); flagged.add(key); }
+      else if (inkGap < gap - EPS) { once(W, A, B, 'gap', inkGap, `${A.name} and ${B.name}: visible gap ${r2(inkGap)}px, minimum ${r2(gap)} — widen it, or fill the counter solid`); flagged.add(key); }
     }
+    for (const { n, fn, msg } of said.values()) fn(n > 1 ? `${msg} (same on ${n} repeated parts)` : msg);
     // endpoints that land near, but not on, another part
     parts.forEach((p, pi) => {
       if (p.closed || p.pts.length < 2) return;
@@ -342,19 +393,34 @@ function checkFile(file) {
         if (d > TOUCH && d < half + EPS) { W(`${p.name} ends ${r2(d)} from ${q.name} — a junction must end exactly on the other centre-line`); flagged.add(`${Math.min(pi, qi)}|${Math.max(pi, qi)}`); }
       });
     });
-    // ink density proxy: stroke area / live area
-    const L = parts.reduce((s, p) => s + length(p.pts), 0);
-    out.stats.density = (L * sw) / Math.pow(size - 2 * pad, 2);
-  } else {
-    // rough filled-area proxy via shoelace on closed subpaths (holes subtract with evenodd only approx.)
-    let A = 0;
-    for (const { g } of geoms) for (const sp of g.subpaths) {
-      let s = 0;
-      for (let k = 0; k < sp.pts.length - 1; k++) s += sp.pts[k][0] * sp.pts[k + 1][1] - sp.pts[k + 1][0] * sp.pts[k][1];
-      A += s / 2;
-    }
-    out.stats.density = Math.abs(A) / Math.pow(size - 2 * pad, 2);
   }
+
+  // ink coverage by sampling: works for stroke and fill icons alike
+  const strokes = [], solids = [];
+  for (const { el, g } of geoms) {
+    const h = halfOf(el);
+    const solid = mode === 'fill' ? el.attrs.fill !== 'none' : filledOf(el);
+    if (solid) solids.push(g.subpaths.filter((sp) => sp.closed || sp.pts.length > 2).map((sp) => sp.pts)); // even-odd within one element
+    if (h > 0) for (const sp of g.subpaths) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const [x, y] of sp.pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      strokes.push({ pts: sp.pts, h, box: [x0 - h, y0 - h, x1 + h, y1 + h] });
+    }
+  }
+  const step = size / 96;
+  let inkN = 0, solidN = 0;
+  for (let y = step / 2; y < size; y += step) for (let x = step / 2; x < size; x += step) {
+    const p = [x, y];
+    const isSolid = solids.some((polys) => polys.filter((poly) => inside(p, poly)).length % 2 === 1);
+    const isStroke = !isSolid && strokes.some((st) => x >= st.box[0] && x <= st.box[2] && y >= st.box[1] && y <= st.box[3] && polyDist(p, st.pts) <= st.h);
+    if (isSolid) solidN++;
+    if (isSolid || isStroke) inkN++;
+  }
+  out.stats.inkArea = inkN * step * step;
+  out.stats.solidShare = inkN ? solidN / inkN : 0;
+  out.stats.density = out.stats.inkArea / Math.pow(size - 2 * pad, 2);
+  I(`ink covers ${Math.round(out.stats.density * 100)}% of the live area${mode === 'stroke' && solidN ? `, ${Math.round(out.stats.solidShare * 100)}% of it solid` : ''}`);
+  if (mode === 'stroke' && out.stats.solidShare > 0.25) W(`${Math.round(out.stats.solidShare * 100)}% of this line icon's ink is solid fill — its filled version won't read as a different state. Open it up, or use it as the filled icon and draw a new line one`);
   return out;
 }
 
@@ -384,13 +450,17 @@ if (ok.length > 1) {
   if (sizes.length === 1 && strokes.filter(Boolean).length > 1) { console.log(`  ERROR mixed stroke widths at one size: ${strokes.join(', ')}`); errorCount++; }
   if (caps.filter(Boolean).length > 1) console.log(`  WARN  mixed linecaps: ${caps.join(', ')}`);
   if (joins.filter(Boolean).length > 1) console.log(`  WARN  mixed linejoins: ${joins.join(', ')}`);
-  const ds = ok.filter((r) => r.stats.mode === 'stroke').map((r) => r.stats.density).sort((a, b) => a - b);
-  if (ds.length >= 3) {
+  // density: open-line glyphs (plus, x, chevrons, arrows) only compare with each other
+  for (const [mode, open] of [['stroke', false], ['stroke', true], ['fill', false]]) {
+    const grp = ok.filter((r) => r.stats.mode === mode && (mode === 'fill' || !!r.stats.open === open));
+    const ds = grp.map((r) => r.stats.density).sort((a, b) => a - b);
+    if (ds.length < 3) continue;
     const med = ds[Math.floor(ds.length / 2)];
-    for (const r of ok) if (r.stats.mode === 'stroke') {
+    const what = mode === 'fill' ? 'filled icons' : open ? 'open-line glyphs' : 'closed-shape icons';
+    for (const r of grp) {
       const k = r.stats.density / med;
-      if (k > 1.6) console.log(`  WARN  ${r.file} carries ${r2(k)}× the set's median ink — too dense, remove detail`);
-      else if (k < 0.5) console.log(`  WARN  ${r.file} carries ${r2(k)}× the set's median ink — reads light or small next to the others — check the blur row`);
+      if (k > 1.6) console.log(`  WARN  ${r.file} carries ${r2(k)}× the median ink of the set's ${what} — too dense, remove detail`);
+      else if (k < 0.5) console.log(`  WARN  ${r.file} carries ${r2(k)}× the median ink of the set's ${what} — reads light or small; check the blur row`);
     }
   }
   console.log('  done');
@@ -431,6 +501,53 @@ figcaption{color:#888;font-size:10px;max-width:90px;text-align:center;overflow-w
 </style>${blind}${rows}${blur}<section class="dark"><h2>on dark, 24px</h2><div class="row">${all.map((i) => `<figure>${cell(i.svg, 24)}<figcaption>${i.name}</figcaption></figure>`).join('')}</div></section>${grid}`;
   writeFileSync(sheetPath, html);
   console.log(`\nsheet → ${sheetPath} (open it; capture rows with a zoomed crop, never a scaled-down full page; give the #blind row alone to a fresh agent for naming)`);
+}
+
+// line + filled pair
+if (pair) {
+  const [L, F] = pair.map((f) => results.find((r) => r.file === basename(f)));
+  console.log(`\nPAIR ${L.file} + ${F.file}`);
+  if (L.stats.ink && F.stats.ink) {
+    const d = Math.max(...['minX', 'minY', 'maxX', 'maxY'].map((k) => Math.abs(L.stats.ink[k] - F.stats.ink[k])));
+    if (d > 0.1 + EPS) { console.log(`  ERROR silhouettes differ by up to ${r2(d)}px — the filled icon must fill the line icon's outer shape exactly, or switching states jumps`); errorCount++; }
+    else console.log(`  ok    silhouettes match (within ${r2(d)}px)`);
+    if ((L.stats.solidShare || 0) > 0.25) console.log(`  WARN  the line icon is already ${Math.round(L.stats.solidShare * 100)}% solid — the pair won't read as two states`);
+    const k = F.stats.inkArea / (L.stats.inkArea || 1);
+    console.log(`  info  filled carries ${r2(k)}× the line icon's ink`);
+    if (k < 1.3) console.log(`  WARN  the filled version is barely heavier than the line one — the selected state won't show`);
+  }
+}
+
+// one-file SVG contact sheet: imports into Figma (createNodeFromSvg) or Paper, where you can screenshot it
+if (sheetSvgPath) {
+  const items = files.map((f) => {
+    const src = readFileSync(f, 'utf8');
+    const m = src.match(/<svg\b([^>]*)>([\s\S]*)<\/svg>/);
+    if (!m) return null;
+    const a = parseAttrs(m[1]);
+    const vb = (a.viewBox || '0 0 24 24').split(/[\s,]+/).map(Number);
+    const keep = ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'fill-rule', 'clip-rule'];
+    return { name: basename(f, '.svg'), size: vb[2], inner: m[2], attrs: keep.filter((k) => a[k] !== undefined).map((k) => [k, a[k]]) };
+  }).filter(Boolean);
+  const colour = (attrs, c) => attrs.map(([k, v]) => `${k}="${v === 'currentColor' ? c : v}"`).join(' ');
+  const glyph = (it, x, y, px, c) => `<g transform="translate(${x} ${y}) scale(${px / it.size})" ${colour(it.attrs, c)}>${it.inner.replace(/currentColor/g, c)}</g>`;
+  const order = items.map((it, k) => ({ it, k: (k * 7919) % 101 })).sort((a, b) => a.k - b.k).map((x) => x.it);
+  const col = 64, W = Math.max(400, items.length * col + 40);
+  let y = 20, body = '';
+  const label = (t, yy) => `<text x="20" y="${yy}" font-family="system-ui, sans-serif" font-size="11" fill="#777">${t}</text>`;
+  body += label('blind (no names): crop for cold naming', y); y += 14;
+  for (const px of [16, 24]) { order.forEach((it, i) => { body += glyph(it, 20 + i * col, y, px, '#000'); }); y += px + 14; }
+  for (const px of [16, 20, 24, 48]) {
+    y += 10; body += label(`${px}px`, y); y += 8;
+    items.forEach((it, i) => { body += glyph(it, 20 + i * col, y, px, '#000'); body += `<text x="${20 + i * col}" y="${y + px + 12}" font-family="system-ui, sans-serif" font-size="9" fill="#999">${it.name.slice(0, 11)}</text>`; });
+    y += px + 20;
+  }
+  y += 10; body += `<rect x="10" y="${y}" width="${W - 20}" height="52" rx="8" fill="#111"/>`;
+  body += `<text x="20" y="${y + 16}" font-family="system-ui, sans-serif" font-size="11" fill="#aaa">on dark, 24px</text>`;
+  items.forEach((it, i) => { body += glyph(it, 20 + i * col, y + 22, 24, '#fff'); });
+  y += 62;
+  writeFileSync(sheetSvgPath, `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y}" viewBox="0 0 ${W} ${y}"><rect width="${W}" height="${y}" fill="#fff"/>${body}</svg>`);
+  console.log(`\nsvg sheet → ${sheetSvgPath} (import into Figma or Paper, then screenshot: no local server needed)`);
 }
 
 process.exit(errorCount ? 1 : 0);

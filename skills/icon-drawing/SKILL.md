@@ -24,7 +24,7 @@ You are an icon designer working without eyes. You cannot see path data: in benc
 1. **Write the plan before any SVG.** Metaphor, keyline, then every part with its numbers, the shared points, and the gaps. Explicit planning measurably improves drawn SVG; improvising coordinates inside the markup is where shapes drift and parts fail to meet.
 2. **Match before you invent.** If the icon joins an existing set, measure that set first (see "Step 0") and copy its numbers. Never lay the default style over another set: an icon that is better than its neighbours but different from them is a defect.
 3. **One stroke weight per size, with no exceptions inside a glyph.** Internal lines use the full stroke. If detail won't fit at that weight, remove the detail or make it solid. Mixed weights are the most visible sign of an inconsistent set. The only sanctioned weight change is a whole separate variant (the +0.5 "selected" version of an open-line icon, below), never a line within one icon.
-4. **One idea, few parts.** A part is one primitive or one subpath (each `M`). 1–3 parts is the target; 6 is a hard cap, and the checker fails anything above it. Above it, simplify or pick another metaphor. Every extra part costs recognition at 16px and raises the drawing error rate. Remove any detail that doesn't change recognition.
+4. **One idea, few parts.** A part is one primitive or one subpath (each `M`). Identical repeats (a sun's rays, a ruler's ticks, a row of dots) count as one part, up to 8. 1–3 parts is the target; 6 is a hard cap, and the checker fails anything above it. Above it, simplify or pick another metaphor. Every extra part costs recognition at 16px and raises the drawing error rate. Remove any detail that doesn't change recognition.
 5. **Geometry only.** No transforms, masks, clip paths, groups, filters, `<use>`, opacity, or ids. Make gaps and cut-outs by cutting the geometry. Masks and ids collide when icons are inlined, break `currentColor`, can't become fonts, and can't be checked numerically. One exception: the 20% tint layer of a duotone icon, and only when the set already ships duotone (CONSTRUCTION.md).
 6. **Shared points use identical numbers.** A stroke that joins another ends exactly on its centre-line, with the same coordinates written in both places. A miss of 0.1 shows as a notch at 48px and fails the checks.
 7. **Never call an icon done unrendered.** Run `check-icons.mjs` and look at the contact sheet at real size next to the neighbours. Don't trust self-review on its own: models routinely miss their own geometric mistakes, which is why both a numeric check and a visual check are required. If you cannot render, deliver it marked "not visually verified", never as finished.
@@ -93,6 +93,8 @@ Then reject any candidate that relies on any of the following:
 - **Perspective or 3/4 views.** System icons are flat and seen straight on.
 - **More than three distinguishable features** at 16px (a calendar's body, header and rings are three).
 
+**Confusables check.** Once a silhouette is chosen, write down the two things it is most likely mistaken for, and the one feature that tells it apart from each (CONSTRUCTION.md → "Confusables"). Also check that the shape doesn't already mean something else in system UI: a half-filled circle is a contrast toggle, a gear is settings. Without this check, a fix tends to trade one confusion for another: a narrow capsule reads as a battery, and widening its top turns it into a bin. Re-run the check on every revision pass.
+
 ## Step 2: plan in coordinates
 
 Write the plan as a list before any markup:
@@ -134,31 +136,40 @@ The numbers behind each of these are in CONSTRUCTION.md → "Optical rules".
 ## Step 5: verify (numbers, then eyes)
 
 ```bash
-node <this skill's folder>/check-icons.mjs new-icon.svg neighbour1.svg neighbour2.svg --sheet sheet.html [--padding 1]
+node <this skill's folder>/check-icons.mjs new-icon.svg neighbour1.svg neighbour2.svg --sheet sheet.html --sheet-svg sheet.svg [--padding 1]
 ```
 
 Pass `--padding` when the set's padding differs from 2 at 24 (Lucide uses 1).
 
 1. **Fix every ERROR.** These are clipping, merged strokes, mixed weights, near-miss junctions and forbidden markup.
 2. **Act on each WARN or justify it in one line.** These are padding intrusion, tight gaps, density outliers and precision.
-3. **Render the sheet** in a browser, or screenshot the Figma or Paper node. Judge from a zoomed crop of the 16 and 24 rows, never a scaled-down full-page screenshot: downscaling hides exactly the blur and merging you're looking for.
-4. **Name it cold.** If you can spawn a fresh agent, give it only a crop of the sheet's blind row (no names) and ask "what is this icon?". It has no knowledge of your intent; you do, and you can't unsee it. Only without a subagent, write what the 16px render shows before rereading your plan. If the name differs from the intent, the metaphor or the silhouette failed: go back to Step 1, not Step 4.
-5. **Check it against the family.** In the blur row it is no darker and no lighter than the references; next to the reference circle it looks centred; on the dark row no gap visibly closes (light strokes on dark read heavier).
+3. **Render the sheet.** In Figma or Paper, import `sheet.svg` and screenshot it. In a browser, serve the HTML sheet over localhost (`python3 -m http.server` in its folder); in-app browsers usually refuse `file://`. Judge from a zoomed crop of the 16 and 24 rows, never a scaled-down full-page screenshot: downscaling hides exactly the blur and merging you're looking for.
+4. **Name it cold.** If you can spawn a fresh agent, give it only a crop of the sheet's blind row (no names) and ask "what is this icon?". It has no knowledge of your intent; you do, and you can't unsee it. Only without a subagent, write what the 16px render shows before rereading your plan. Then name it a second time next to its closest look-alike from the confusables check ("which of these is the bottle?"): a blind name can pass while the icon still loses to its neighbour. If either name differs from the intent, the metaphor or the silhouette failed: go back to Step 1, not Step 4.
+5. **Check it against the family.** In the blur row (HTML sheet; in Figma, a copy of the SVG sheet with a 1px layer blur) it is no darker and no lighter than the references; next to the reference circle it looks centred; on the dark row no gap visibly closes (light strokes on dark read heavier).
 
 ## Variants and sizes
 
 ```
 Filled / active variant?
+├── Is the line icon already more than 25% solid (a half-moon, a pie, a toggle)?
+│   → The pair won't read as two states. Make the line version fully open,
+│     or use the existing icon as the filled one and draw a new line icon.
 ├── Outline has a closed body (bell, heart, folder, user)
 │   → Fill the outline's OUTER silhouette exactly, so swapping states never
 │     changes size. Interior lines become knock-outs, width = stroke − 0.25:
 │     a light line cut into a dark mass reads wider than it is (irradiation).
-│     1–3 solid shapes.
+│     1–3 solid shapes. Then run the meaning test (CONSTRUCTION.md →
+│     "Filled"): whatever told the line icon apart from its look-alikes
+│     must survive as a cut-out.
 ├── Outline is open lines (arrows, chevrons, x, menu)
 │   → No filled form: filling lines produces nothing. Use the outline, or a
 │     separate +0.5 heavier variant if a selected weight is required.
-└── A knock-out would sit closer than one gap to the silhouette's edge
-    → Drop that detail in the filled version; keep recognition.
+└── A knock-out would leave a sliver thinner than one gap at the edge
+    → Cut it all the way through the edge instead, or drop that detail.
+
+Verify every pair with `check-icons.mjs --pair line.svg filled.svg` (the
+silhouettes must match within 0.1) and name the filled icon blind too:
+filling erases features, and the checker can't see meaning.
 
 Smaller size (16 or 20)?
 ├── Redraw from the master's skeleton with that size's stroke and keylines
@@ -219,4 +230,4 @@ Step 5 passed in full, plus what it doesn't cover:
 
 - Numbers and rules: the default style, the per-size table, library cards, keyline maths, optical rules, filled and duotone derivation, modifiers, angles, arrows, dots: [CONSTRUCTION.md](CONSTRUCTION.md)
 - Execution: the SVG template, allowed elements, coordinate recipes, stroke arithmetic, knock-outs, the Figma, Paper and code workflows, SVGO settings, and exporting filled versions: [SVG.md](SVG.md)
-- The checker: [check-icons.mjs](check-icons.mjs), with no dependencies. `--sheet` writes an HTML contact sheet: five sizes, a blur row, a dark row, and a 10× grid with the live area marked.
+- The checker: [check-icons.mjs](check-icons.mjs), with no dependencies. `--sheet` writes an HTML contact sheet (a blind row, five sizes, a blur row, a dark row, a 10× grid with the live area marked); `--sheet-svg` writes the same rows as one SVG to import into Figma or Paper.

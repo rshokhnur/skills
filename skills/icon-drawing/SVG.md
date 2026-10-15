@@ -106,11 +106,18 @@ Without an outline-stroke tool, build the filled glyph as one compound path with
 ## Workflow: Figma (Plugin API / use_figma)
 
 1. **Build geometry as an SVG string** in a 24 viewBox with explicit `width="24" height="24"`, and import it with `figma.createNodeFromSvg(svg)`.
+   - `createNodeFromSvg` drops `currentColor`. Replace it with `#000` in the string before import, then bind the fills and strokes to the file's colour variables.
    - Never assemble icons from `createLine()` or rectangles plus `rotation`. Rotation pivots on the node's corner, so chevrons collapse and arrowheads detach.
 2. **If writing `vectorPaths` directly,** use only absolute `M L Q C Z`: no arcs, H/V or relative commands. Convert arcs to cubics with the 0.5523 handle.
    - Figma re-bases coordinates to the node's position. Set x and y after creation and read back before trusting numbers.
 3. **Strokes stay CENTER-aligned.** Inside and outside alignment exports as approximations or masks. Use round caps and joins, and don't set per-vertex caps on one path, because mixed endings export as fills.
-4. **Keep an editable stroke master.** For filled variants or font export, duplicate it and run `outlineStroke()`. Then use `figma.subtract` for knock-outs (it takes the bottom layer's style) and `figma.flatten` the result into one vector with one fill.
+4. **Keep an editable stroke master.** Build a filled variant from a duplicate, in this order:
+   1. `outlineStroke()` the duplicate, then union the outline with the shape's interior to get the solid silhouette.
+   2. Draw the cut-outs as shapes at stroke − 0.25. Extend any cut that should run through the edge past the silhouette.
+   3. `figma.subtract` the cut-outs from the silhouette. It takes the bottom layer's style.
+   4. `figma.flatten` the result into one vector with one fill.
+   5. `exportAsync({ format: 'SVG_STRING', useAbsoluteBounds: true })`. Then replace the exported `fill="black"` (or `#000`) with `fill="currentColor"`, because Figma writes the literal colour.
+   6. Run `check-icons.mjs --pair line.svg filled.svg`.
 5. **Component per icon,** named by the depicted object, with a variant per size (`size=16|20|24`). Each variant is drawn separately, not scaled. Children use SCALE constraints.
 6. **Verify:**
    - Run `exportAsync({ format: 'SVG_STRING', useAbsoluteBounds: true })` so the 24 frame and its padding survive.

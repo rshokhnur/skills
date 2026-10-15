@@ -82,6 +82,8 @@ Confirm these against three real icons before drawing. Libraries change.
 - **Corner:** both segments belong to one subpath, so the join is real.
 - **Arrowhead:** either one polyline (`M a L tip L b`) with the shaft ending exactly at the tip, or two paths that share the identical tip coordinate.
 
+- **A symbol inside a container** (a speech bubble, a shield, a badge) needs at least 7px at 24 and 6px at 20, with at least one gap to the container's inner edge. Below that, drop the symbol at that size, or drop the container. This applies to line and filled versions alike.
+
 ## Modifiers, badges, slashes
 
 - **Slot.** A modifier (plus, minus, check, x, clock, alert) sits bottom-right, about Ø10 at 24 with its outer edge at 22,22. Cut the base glyph with a gap around it. The size and slot are identical across the whole family.
@@ -94,7 +96,12 @@ Confirm these against three real icons before drawing. Libraries change.
 - **Filled = the outline's outer silhouette, exactly.** For a centre-line radius r, the filled radius is r + stroke/2. Swapping outline and filled (inactive and active) never changes size.
 - **Interior details become knock-outs** at stroke − 0.25. Build filled variants from 1–3 contiguous solid shapes.
 - **Open-line icons** (arrows, chevrons, x, menu, check) have no filled form. Use the outline, or the stroke + 0.5 if a heavier selected state is required.
-- **Recompose when a plain fill erases meaning.** For example, a filled house needs its door cut out, and a filled user needs a gap between head and shoulders kept as a knock-out.
+- **Line icons that are already solid** (more than 25% of their ink is fill: a half-moon, a pie chart, a toggle) have no distinct filled state. Open the line version up, or promote it to the filled icon and draw a new line one, such as an outline moon with a phase line.
+- **The meaning test.** Before filling, list the features that told the line icon apart from its look-alikes (the confusables check). After filling, each one must still show, as a cut-out or as silhouette. If filling swallowed one, redraw that feature as a cut-out with at least one gap from the edge. A filled house keeps its door; a filled user keeps the gap between head and shoulders; a filled bottle keeps its neck and the band narrower than the body.
+- **Where cut-outs go.**
+  - **Inside the shape:** at least one gap from the silhouette edge, or the rim becomes a sliver that vanishes at 16px.
+  - **Through the edge:** a cut that runs past the silhouette (a calendar's header line, a book's spine, a waistband) splits the solid into clean pieces. This often reads better than a cut that stops inside.
+  - **From the edge (a notch):** allowed for ticks and tabs, but it must run at least two gaps inward. A shorter notch reads as a dent in the outline.
 - **Duotone.** A tint shape at 20% opacity sits under the regular outline. It is drawn to the stroke's centre-line, so its edge hides under the stroke, and covers only the object's body. Duotone is the one place opacity is allowed, and only when the set already ships duotone.
 - **Usage, briefly** (the full rules belong to `icon-usage`): filled marks selected or active state and main navigation. It is never for emphasis or decoration.
 
@@ -112,6 +119,27 @@ Every icon in a family shares the following. Write any deviation down:
 8. Level of detail (similar ink density; the checker's density warning flags outliers).
 9. Delivery format (live stroke or outlined fill).
 10. Naming grammar: depicted object first, modifiers after, kebab-case.
+
+## Confusables
+
+A silhouette that reads as the wrong object fails even when it's drawn perfectly. For each new icon, name its two closest look-alikes and the feature that separates them. Then make that feature the most visible thing in the drawing. Known pairs:
+
+| Intended | Mistaken for | The separating feature |
+| --- | --- | --- |
+| bottle | battery, jar, bin | a narrow nipple or neck on top; a band narrower than the body; marks on one side only (a centred mark reads as a battery) |
+| bin / trash | bottle, jar, cup | a lid wider than the body, with a handle; vertical slats |
+| battery | bottle, phone | a small terminal nub on one end; horizontal orientation; a fill level |
+| jar | bottle, cup | a wide mouth and a screw lid as wide as the body |
+| cup / mug | jar, bin | a handle on the side; open top |
+| bowl | nappy, cup, moon | a flat rim line and a foot; wider than tall |
+| nappy / diaper | bowl, underwear | leg openings and a waistband line |
+| half-filled circle | contrast or theme toggle | avoid it for anything else; it is taken by system UI |
+| crescent | contrast, night mode, "do not disturb" | if it means something else in your product, add the distinguishing context (a container, a modifier) |
+| clock | timer, history | timer: a crown button on top; history: a counter-clockwise arrow around the face |
+| bell | notification badge | already standard; don't reuse it for "alarm" without an alarm cue (legs or rays) |
+| symbol inside a speech bubble | a bare bubble, a badge | the symbol must be large enough to read: see "A symbol inside a container" |
+
+Add pairs to this table as tests find them.
 
 ## Metaphor guardrails
 
