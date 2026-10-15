@@ -24,6 +24,7 @@ Each of those is small. Together they're the difference between an interface tha
 
 - **[ux-writing](./skills/ux-writing/SKILL.md)** — Write and review interface copy: buttons, errors, empty states, dialogs, notifications, onboarding. A calm, minimal default voice that yields to your brand voice, tone that adapts to what the user is feeling, and a banned list of the words that make products feel cheap.
 - **[text-layout](./skills/text-layout/SKILL.md)** — Make text physically behave: wrapping, orphans, glue, truncation, overflow, line length, and surviving translation, RTL, and 200% zoom. Diagnoses the container before touching the text.
+- **[icon-drawing](./skills/icon-drawing/SKILL.md)** *(in testing)* — Draw UI icons that read at a glance and belong to one family, in Figma, Paper, or code. The agent plans each icon in coordinates, draws it from a few primitives, and checks it twice: a bundled script catches merged strokes, near-miss joins, clipping and mixed weights, and a contact sheet shows it at real size next to its neighbours. Matches an existing set, or defaults to a quiet, minimal style.
 
 ## How they're built
 
@@ -31,7 +32,7 @@ Each skill is grounded in primary sources — the research (NN/g, Baymard), the 
 
 ## Status
 
-Two skills, both shipped. Each one passed two tests on real products and a trigger test, where fresh agents with no skill named had to pick it up on their own. Test reports are in `tests/`. More skills as they earn their place.
+Two skills shipped, one in testing. Each shipped skill passed two tests on real products and a trigger test, where fresh agents with no skill named had to pick it up on their own. `icon-drawing` installs with the rest but hasn't passed those tests yet. Test reports are in `tests/`. More skills as they earn their place.
 
 ## License
 
