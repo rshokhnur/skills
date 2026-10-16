@@ -32,13 +32,13 @@ You are an icon designer working without eyes. You cannot see path data: in benc
 
 ## Step 0: establish the style card
 
-Before drawing, write a style card. Every later number comes from it. The default style's card, as the template:
+Before drawing, write a style card. Every later number comes from it. Calibrate the stroke against the UI text before drawing a whole set (CONSTRUCTION.md → "Calibrate the stroke against the text"): a stroke that's right in isolation can look bold beside the labels. The default style's card, as the template:
 
 ```
 canvas 24 · stroke 2 (20: 1.75 · 16: 1.5) · caps/joins round · padding 2 (live area 20)
 keylines: circle Ø20 · square 18 · portrait 16×20 · landscape 20×16
 radius: containers outer 3 / inner 1 · shapes < 8px outer 2 · junctions sharp
-gap ≥ 2 · dots solid Ø3 · arrowheads 90° chevron · angles 45°, then 30°/60°
+gap ≥ 2 · dots solid (standalone Ø3, in ! ? i ≈1.15× stroke) · arrowheads 90° chevron · angles 45°, then 30°/60°
 modifier slot: bottom-right, Ø10, outer edge at 22,22 · names: object-modifier, kebab-case
 delivery: live stroke (code) | outlined fill (font / filled variant)
 ```
@@ -72,6 +72,12 @@ Is there an established icon for this concept (platform convention, the set
 itself, the major libraries)?
 ├── Yes → Use that metaphor. Familiarity is most of recognition; a "better"
 │         new symbol for search, home, settings, share, or close reads worse.
+│         Check which convention fits the product's category: "send" is a
+│         paper plane in mail but an up arrow in a circle in AI chat.
+├── Is it about the body (a measurement, a bodily function, a health state)?
+│   → Draw the tool or the object, not the body part: a tape measure, not a
+│     head; a bottle or a milk drop, not a breast. Body parts at 24px read as
+│     faces, fruit or letters, and some make users uncomfortable.
 └── No
     ├── Is there a physical object people use for it?
     │   → Draw its most common, most culture-neutral form (envelope, not a
@@ -88,7 +94,8 @@ itself, the major libraries)?
 
 Then reject any candidate that relies on any of the following:
 - **Text or letters.** They don't localise and blur at 16px. Only use them when the letter is the convention, such as B for bold.
-- **Hand gestures, puns, or religious and political symbols.** Their meaning flips across cultures.
+- **Hand gestures, puns, or religious and political symbols.** Their meaning flips across cultures. Exception: a gesture that is the established control in the target market, such as thumbs up and down for rating; check the market first. Innocent shapes can combine into a symbol: a crescent with a star is a religious sign in many countries.
+- **Anything the user wouldn't want seen on their screen.** For health, body and parenting icons, ask: would the user be uncomfortable if someone looked over their shoulder? If yes, pick a neutral object.
 - **Hardware that dates fast.** Exception: keep it when it's already the set's convention (the floppy disk for save is still legitimate).
 - **Perspective or 3/4 views.** System icons are flat and seen straight on.
 - **More than three distinguishable features** at 16px (a calendar's body, header and rings are three).
@@ -124,7 +131,7 @@ Each workflow is in SVG.md.
 
 ## Step 4: optical pass
 
-- **Weight.** Compare the icon against the reference circle and square in the blur row. The checker's density warning flags the same thing numerically. If it reads darker, remove detail. If it reads lighter, grow it to its full keyline. Never change the stroke to fix weight.
+- **Weight.** Weight is judged in the blur test (Step 5.4). If the icon reads darker than the references, remove detail. If it reads lighter, grow it to its full keyline. Never change the stroke to fix weight.
 - **Centring.**
   - Symmetric icons are centred geometrically.
   - Triangles are centred on their centroid. A play triangle moves w/6 toward its tip; a star or warning triangle moves up about 0.8 at 24.
@@ -142,10 +149,14 @@ node <this skill's folder>/check-icons.mjs new-icon.svg neighbour1.svg neighbour
 Pass `--padding` when the set's padding differs from 2 at 24 (Lucide uses 1).
 
 1. **Fix every ERROR.** These are clipping, merged strokes, mixed weights, near-miss junctions and forbidden markup.
-2. **Act on each WARN or justify it in one line.** These are padding intrusion, tight gaps, density outliers and precision.
+2. **Act on each WARN or justify it in one line.** These are padding intrusion, tight gaps, density outliers, blur clumps and precision.
 3. **Render the sheet.** In Figma or Paper, import `sheet.svg` and screenshot it. In a browser, serve the HTML sheet over localhost (`python3 -m http.server` in its folder); in-app browsers usually refuse `file://`. Judge from a zoomed crop of the 16 and 24 rows, never a scaled-down full-page screenshot: downscaling hides exactly the blur and merging you're looking for.
-4. **Name it cold.** If you can spawn a fresh agent, give it only a crop of the sheet's blind row (no names) and ask "what is this icon?". It has no knowledge of your intent; you do, and you can't unsee it. Only without a subagent, write what the 16px render shows before rereading your plan. Then name it a second time next to its closest look-alike from the confusables check ("which of these is the bottle?"): a blind name can pass while the icon still loses to its neighbour. If either name differs from the intent, the metaphor or the silhouette failed: go back to Step 1, not Step 4.
-5. **Check it against the family.** In the blur row (HTML sheet; in Figma, a copy of the SVG sheet with a 1px layer blur) it is no darker and no lighter than the references; next to the reference circle it looks centred; on the dark row no gap visibly closes (light strokes on dark read heavier).
+4. **Blur test.** This is Lucide's review test, and Streamline's "stain" test. Blur the icons at 24px next to the reference circle and square, with a gaussian of about 1/16 of the canvas (σ 1.5px). Both sheets include this row; the recipe for each tool is in SVG.md → "Blur test". Blurring removes the drawing and leaves only the distribution of ink, which is what the eye compares across a toolbar. Check three things:
+   - **Overall darkness:** no darker and no lighter than the references. Too dark means remove detail; too light means grow to the keyline.
+   - **Dark clumps:** no spot inside the icon darker than the rest. A clump means detail packed too tight there; space it out or drop it. The checker flags clumps numerically (`blur test: a dark clump near (x, y)`). Junctions and arrow tips are naturally a little darker.
+   - **Silhouette:** the blurred shape still suggests the object. If it's an indistinct blob, the outline carries too little of the meaning.
+5. **Name it cold.** If you can spawn a fresh agent, give it only a crop of the sheet's blind row (no names) and ask three questions: "what is this icon?", "what else could it be in an app?", and "could it read as a letter or number?". The second and third questions catch what the first misses: a ruler that is also a battery, two bars that read as "00". It has no knowledge of your intent; you do, and you can't unsee it. Only without a subagent, write what the 16px render shows before rereading your plan. Then name it a second time next to its closest look-alike from the confusables check ("which of these is the bottle?"): a blind name can pass while the icon still loses to its neighbour. If either name differs from the intent, the metaphor or the silhouette failed: go back to Step 1, not to the optical pass.
+6. **Check it against the family.** Next to the reference circle it looks centred, and on the dark row no gap visibly closes (light strokes on dark read heavier).
 
 ## Variants and sizes
 
@@ -161,26 +172,34 @@ Filled / active variant?
 │     1–3 solid shapes. Then run the meaning test (CONSTRUCTION.md →
 │     "Filled"): whatever told the line icon apart from its look-alikes
 │     must survive as a cut-out.
-├── Outline is open lines (arrows, chevrons, x, menu)
-│   → No filled form: filling lines produces nothing. Use the outline, or a
-│     separate +0.5 heavier variant if a selected weight is required.
-└── A knock-out would leave a sliver thinner than one gap at the edge
-    → Cut it all the way through the edge instead, or drop that detail.
+├── Open lines (arrows, chevrons, ×), already solid (pause), or slashed
+│   → No filled form. The filled sibling is an exact copy of the line icon,
+│     or a separate +0.5 heavier variant if a selected weight is required.
+└── A knock-out would leave a sliver thinner than one gap at the rim
+    → Move it inward or drop that detail. Cuts never open the rim: restore
+      the outer edge after cutting, so the silhouette stays continuous.
 
 Verify every pair with `check-icons.mjs --pair line.svg filled.svg` (the
 silhouettes must match within 0.1) and name the filled icon blind too:
 filling erases features, and the checker can't see meaning.
 
 Smaller size (16 or 20)?
-├── Redraw from the master's skeleton with that size's stroke and keylines
-│   (CONSTRUCTION.md → "Per-size table"). Never ship a scaled 24 as a 16
-│   or 20 asset. If the stack can only scale one file, ship the 24 and say so.
+├── Start from the master scaled to the new canvas (×5/6 for 20) with that
+│   size's stroke, then check it as a new icon: checker, sheet, blind name.
+│   A scaled 24 is a starting point, never the shipped 20.
+│   If the stack can only scale one file, ship the 24 and say so.
 └── For each detail: does its counter stay ≥ one gap at the new size?
     ├── Yes → keep it.
-    └── No → merge it solid, drop a repeat (3 lines → 2), or remove it.
+    └── No → merge it solid, drop a repeat (3 lines → 2), drop decorative
+        curls and tips that touch a curve, or redraw small neighbouring
+        shapes so they don't tangle.
 ```
 
 **Modifiers.** Badges such as plus, check or x go bottom-right, with a gap cut out of the base. One fixed slot keeps the base glyph's recognisable top and left intact, and lets the eye find the modifier in the same place on every icon. A slash runs top-left to bottom-right, and the base is cut beside it. The modifier's size and position stay identical across the whole family.
+
+**Two objects in one icon** (wet and dirty, cloud and arrow): keep the main object at 80–90% of its normal size and add the second as a small solid badge in the free corner, at least 5 across at 24 so it doesn't read as a stray dot. Two half-size objects side by side are too small to read.
+
+**Shared motifs in one set** (undo and history both curve back into an arrow): make the silhouettes differ, such as an open arrow against a closed circle, and check them side by side in the blind row.
 
 **Names** describe what is drawn, not the action (`floppy-disk`, not `save`): the same picture means different actions in different products. Kebab-case, base object first, modifiers after (`bell-off`, `folder-plus`).
 
@@ -189,7 +208,7 @@ Smaller size (16 or 20)?
 Step 5 passed in full, plus what it doesn't cover:
 
 1. **Family:** the icon shares the style card's caps, joins, radius system, angle set, modifier slot and naming grammar with its neighbours (CONSTRUCTION.md → "Family consistency checklist").
-2. **Variants:** a filled version matches the outline's outer silhouette; a smaller size was redrawn, not scaled.
+2. **Variants:** a filled version matches the outline's outer silhouette; a smaller size was checked and fixed as its own icon, not shipped as a scaled 24.
 3. **Root:** attributes match the template or the set's root exactly, colour is `currentColor`, numbers have at most 3 decimals.
 
 ## Invocation Variants
@@ -198,7 +217,7 @@ Step 5 passed in full, plus what it doesn't cover:
 | --- | --- |
 | `<concept or icon name>` | Style card → metaphor → plan → draw → verify; deliver the icon, then stop |
 | `<icon names> for <set or file>` | Measure the set, then draw each icon to its card; one sheet with all new icons beside 4 existing ones |
-| `new set: <list>` | Default style (or the brief's); draw the 2–3 hardest first, show them and wait for approval, then the rest on the same card. The hardest icons force the style decisions; locking them early saves redrawing the whole set |
+| `new set: <list>` | Default style (or the brief's); draw the 2–3 hardest first, show them and wait for approval, then the rest on the same card, in packs of about 5 with approval between packs. The hardest icons force the style decisions; locking them early saves redrawing the whole set. If told to continue without approval, mark every choice you made alone as "my pick" so it's easy to review |
 | `<icon> + filled` / `+ 16` / `+ 20` | Derive the variant or size by the trees above |
 | `review <icons or folder>` | Run the checks and the sheet, return the report below, then stop |
 | `review … + fix` / `fix 1, 3` | Apply the fixes, re-run the checks, and show the before and after sheet |
@@ -230,4 +249,4 @@ Step 5 passed in full, plus what it doesn't cover:
 
 - Numbers and rules: the default style, the per-size table, library cards, keyline maths, optical rules, filled and duotone derivation, modifiers, angles, arrows, dots: [CONSTRUCTION.md](CONSTRUCTION.md)
 - Execution: the SVG template, allowed elements, coordinate recipes, stroke arithmetic, knock-outs, the Figma, Paper and code workflows, SVGO settings, and exporting filled versions: [SVG.md](SVG.md)
-- The checker: [check-icons.mjs](check-icons.mjs), with no dependencies. `--sheet` writes an HTML contact sheet (a blind row, five sizes, a blur row, a dark row, a 10× grid with the live area marked); `--sheet-svg` writes the same rows as one SVG to import into Figma or Paper.
+- The checker: [check-icons.mjs](check-icons.mjs), with no dependencies. `--sheet` writes an HTML contact sheet (a blind row, five sizes, a blur row, a dark row, a 10× grid with the live area marked); `--sheet-svg` writes the same rows, blur included, as one SVG to import into Figma or Paper. Every run also does the blur test in numbers and flags dark clumps.

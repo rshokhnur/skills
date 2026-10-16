@@ -74,6 +74,7 @@ H x+r A r r 0 0 1 x y+h-r V y+r A r r 0 0 1 x+r y Z
 
 - **One continuous stroke = one subpath.** Corners then get a real round join. Two separate segments meeting at a point leave a visible notch at large sizes.
 - **T-junction:** the stem's endpoint is a point on the other element's centre-line, computed exactly, with the same numbers written in both elements. The checker flags any endpoint that lands within stroke/2 of another element without touching it.
+- **Crossing strokes (×, a globe's equator):** a mid-segment crossing is fine and the checker accepts it. Arms drawn from a shared centre are equally clean. The × spans less than the + (6.5–17.5 against 5–19 at 24), because diagonals look longer and heavier.
 - **Arrow:** shaft `M5 12 H19` and head `M12 5 L19 12 L12 19`. The tip (19,12) is shared exactly. Or draw the whole arrow as one path.
 - **Overlap:** never draw the hidden part of the back object. Stop its path at the cut points computed above. Lucide's "copy" icon draws only the visible part of the back sheet.
 - **Slash ("off"):** draw the slash `M3 3 L21 21` at padding 2 (`M2 2 L22 22` in a padding-1 set like Lucide). Split the base geometry where it comes within (gap + stroke) of the slash on one side, and leave those fragments out. Fragment endpoints become computed decimals, and that is correct.
@@ -81,8 +82,8 @@ H x+r A r r 0 0 1 x y+h-r V y+r A r r 0 0 1 x+r y Z
 ## Dots
 
 - **Dot equal to the stroke** (Lucide, Feather, Tabler): `M12 8h.01`. Round caps render a disc with diameter equal to the stroke. Check that it survives SVGO (see below).
-- **Dot 1.5× the stroke** (default style, Phosphor): `<circle cx="12" cy="8" r="0.5"/>` stroked at 2 renders a solid disc of outer Ø3, because r − s/2 < 0 closes the hole. It stays pure geometry with no fill attribute. In general, outer Ø = 2r + s.
-- **"More" dots, Ø4 at stroke 2:** `<circle r="1"/>` ×3, centres 7 apart (5, 12, 19).
+- **Any other dot size: a filled circle,** `<circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none"/>` for Ø3. This works everywhere. The stroke trick (a tiny circle with r − s/2 < 0) renders a solid disc in browsers but a ring in Figma, and a ring-shaped dot reads as a different object.
+- **"More" dots, Ø4 at stroke 2:** three filled circles of r 2, centres 7 apart (5, 12, 19).
 
 ## Filled variants in code
 
@@ -113,12 +114,12 @@ Without an outline-stroke tool, build the filled glyph as one compound path with
 3. **Strokes stay CENTER-aligned.** Inside and outside alignment exports as approximations or masks. Use round caps and joins, and don't set per-vertex caps on one path, because mixed endings export as fills.
 4. **Keep an editable stroke master.** Build a filled variant from a duplicate, in this order:
    1. `outlineStroke()` the duplicate, then union the outline with the shape's interior to get the solid silhouette.
-   2. Draw the cut-outs as shapes at stroke − 0.25. Extend any cut that should run through the edge past the silhouette.
+   2. Draw the cut-outs as shapes at stroke − 0.25. Stop each one a rim's width (the line stroke) inside the silhouette edge, so no cut opens the rim.
    3. `figma.subtract` the cut-outs from the silhouette. It takes the bottom layer's style.
    4. `figma.flatten` the result into one vector with one fill.
    5. `exportAsync({ format: 'SVG_STRING', useAbsoluteBounds: true })`. Then replace the exported `fill="black"` (or `#000`) with `fill="currentColor"`, because Figma writes the literal colour.
    6. Run `check-icons.mjs --pair line.svg filled.svg`.
-5. **Component per icon,** named by the depicted object, with a variant per size (`size=16|20|24`). Each variant is drawn separately, not scaled. Children use SCALE constraints.
+5. **Component set per icon,** named `Icon / <Object>` after what's drawn, with a `Style` property (`Line` default, `Filled`) and a size property if sizes ship as components. Icons with no filled form get an exact copy as their `Filled` variant, so every set swaps the same way. Bind the glyph's fill or stroke to the ink colour variable. Children use SCALE constraints.
 6. **Verify:**
    - Run `exportAsync({ format: 'SVG_STRING', useAbsoluteBounds: true })` so the 24 frame and its padding survive.
    - Save the string, run the checker on it, then screenshot the node at 1× and 4×.
@@ -134,6 +135,16 @@ Paper has no booleans, outline stroke or shape-to-path, so all cut-outs must alr
 4. Read the result back with `get_jsx` or `get_computed_styles`. Confirm `viewBox`, `stroke-linecap`/`linejoin` and `currentColor` survived. Never read sizes from a screenshot.
 5. Run the checker on the SVG string. Then `get_screenshot` the icon at 1× and enlarged, next to existing icons in the file.
 6. Call `finish_working_on_nodes` when done.
+
+## Blur test
+
+The same check in every tool: icons at 24px beside the reference circle and square, blurred by a gaussian of about σ 1.5px (1/16 of the canvas). Screenshot the row with a zoomed crop.
+
+- **HTML sheet (`--sheet`):** the "blur test" row is already blurred with CSS.
+- **SVG sheet (`--sheet-svg`):** the blur row uses an SVG `feGaussianBlur`. If Figma drops the filter on import, apply the Figma recipe to that row.
+- **Figma:** duplicate the row of icons, including the references. Set `node.effects = [{ type: 'LAYER_BLUR', radius: 3, visible: true }]` on the duplicate frame; Figma's blur radius is about twice the gaussian σ. Screenshot it, then delete the duplicate.
+- **Paper:** duplicate the row with `duplicate_nodes`, then `update_styles` with `filter: blur(1.5px)` on the duplicate. Screenshot it, then delete it.
+- **Numbers, with no render at all:** the checker blurs each stroke icon's ink map the same way and compares the darkest point with the reference square's. Above 1.5× it warns, with the location of the clump.
 
 ## SVGO for icons
 

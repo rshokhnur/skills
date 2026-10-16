@@ -15,7 +15,7 @@
 // Exit code 1 if any ERROR. WARN = look at it, may be intentional. INFO = context.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { basename } from 'node:path';
+import { basename, relative } from 'node:path';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -221,6 +221,15 @@ function polyDist(p, pts) {
   for (let k = 0; k < pts.length - 1; k++) m = Math.min(m, segDist(p, pts[k], pts[k + 1]));
   return m;
 }
+function segsCross(a, b, c, d) {
+  const o = (p, q, r) => (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+  const d1 = o(c, d, a), d2 = o(c, d, b), d3 = o(a, b, c), d4 = o(a, b, d);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+function polysCross(P, Q) {
+  for (let i = 0; i < P.length - 1; i++) for (let j = 0; j < Q.length - 1; j++) if (segsCross(P[i], P[i + 1], Q[j], Q[j + 1])) return true;
+  return false;
+}
 function closestOnPoly(p, pts) {
   let best = Infinity, bp = pts[0];
   for (let k = 0; k < pts.length - 1; k++) {
@@ -241,6 +250,25 @@ function inside(p, pts) {
   }
   return c;
 }
+// blur test in numbers: box-blur an ink mask twice (≈ gaussian) and return its darkest spot
+function blurPeak(mask, n, R) {
+  let a = Float32Array.from(mask), b = new Float32Array(n * n);
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { // horizontal
+      let s = 0, c = 0;
+      for (let k = -R; k <= R; k++) { const xx = x + k; if (xx >= 0 && xx < n) { s += a[y * n + xx]; c++; } }
+      b[y * n + x] = s / (2 * R + 1);
+    }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { // vertical
+      let s = 0;
+      for (let k = -R; k <= R; k++) { const yy = y + k; if (yy >= 0 && yy < n) s += b[yy * n + x]; }
+      a[y * n + x] = s / (2 * R + 1);
+    }
+  }
+  let peak = 0, at = 0;
+  for (let i = 0; i < n * n; i++) if (a[i] > peak) { peak = a[i]; at = i; }
+  return { peak, x: at % n, y: Math.floor(at / n) };
+}
 function length(pts) {
   let L = 0;
   for (let k = 0; k < pts.length - 1; k++) L += Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]);
@@ -251,11 +279,16 @@ const onGrid = (v, step = 1) => Math.abs(v / step - Math.round(v / step)) < 0.02
 const r2 = (v) => Math.round(v * 100) / 100;
 
 // ---------- per-file check ----------
+// show the relative path when two files share a basename (line/24/x.svg vs filled/24/x.svg)
+function displayName(file) {
+  const dup = files.filter((f) => basename(f) === basename(file)).length > 1;
+  return dup ? relative(process.cwd(), file) : basename(file);
+}
 function checkFile(file) {
-  const out = { file: basename(file), errors: [], warns: [], infos: [], stats: {} };
+  const out = { file: displayName(file), path: file, src: '', errors: [], warns: [], infos: [], stats: {} };
   const E = (m) => out.errors.push(m), W = (m) => out.warns.push(m), I = (m) => out.infos.push(m);
   let src;
-  try { src = readFileSync(file, 'utf8'); } catch (e) { E(`cannot read: ${e.message}`); return out; }
+  try { src = readFileSync(file, 'utf8'); out.src = src; } catch (e) { E(`cannot read: ${e.message}`); return out; }
   const svg = readSvg(src);
   if (!svg) { E('no <svg> root'); return out; }
   const { root, elements } = svg;
@@ -375,13 +408,13 @@ function checkFile(file) {
       let m = Infinity, pa = null, pb = null;
       for (const p of A.dense) { const [d, q] = closestOnPoly(p, B.pts); if (d < m) { m = d; pa = p; pb = q; } if (m < TOUCH) break; }
       for (const p of B.dense) { if (m < TOUCH) break; const [d, q] = closestOnPoly(p, A.pts); if (d < m) { m = d; pa = q; pb = p; } }
-      if (m < TOUCH) { flagged.add(`${a}|${b}`); continue; } // touching parts: a junction, checked by the shared-point rule
+      if (m < TOUCH || polysCross(A.pts, B.pts)) { flagged.add(`${a}|${b}`); continue; } // touching or crossing: a deliberate junction
       const inkGap = m - A.half - B.half; // real distance between ink edges
       const mid = [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2];
       if (inkGap < gap - EPS && covered(mid, a, b)) continue; // a third part fills the space: no counter here
       const key = `${a}|${b}`;
-      if (inkGap < -EPS) { once(E, A, B, 'overlap', inkGap, `${A.name} and ${B.name}: inks overlap by ${r2(-inkGap)} without meeting — they merge into a blob. Make the shared point identical, or move them ≥ ${r2(gap)} apart`); flagged.add(key); }
-      else if (inkGap < gap - EPS) { once(W, A, B, 'gap', inkGap, `${A.name} and ${B.name}: visible gap ${r2(inkGap)}px, minimum ${r2(gap)} — widen it, or fill the counter solid`); flagged.add(key); }
+      if (inkGap < -EPS) { once(E, A, B, 'overlap', inkGap, `${A.name} and ${B.name}: inks overlap by ${r2(-inkGap)} without meeting near (${r2(mid[0])}, ${r2(mid[1])}) — they merge into a blob. Make the shared point identical, or move them ≥ ${r2(gap)} apart`); flagged.add(key); }
+      else if (inkGap < gap - EPS) { once(W, A, B, 'gap', inkGap, `${A.name} and ${B.name}: visible gap ${r2(inkGap)}px near (${r2(mid[0])}, ${r2(mid[1])}), minimum ${r2(gap)} — widen it, or fill the counter solid`); flagged.add(key); }
     }
     for (const { n, fn, msg } of said.values()) fn(n > 1 ? `${msg} (same on ${n} repeated parts)` : msg);
     // endpoints that land near, but not on, another part
@@ -407,20 +440,42 @@ function checkFile(file) {
       strokes.push({ pts: sp.pts, h, box: [x0 - h, y0 - h, x1 + h, y1 + h] });
     }
   }
-  const step = size / 96;
+  const step = size / 96, n = 96;
+  const mask = new Uint8Array(n * n);
   let inkN = 0, solidN = 0;
-  for (let y = step / 2; y < size; y += step) for (let x = step / 2; x < size; x += step) {
+  for (let iy = 0; iy < n; iy++) for (let ix = 0; ix < n; ix++) {
+    const x = (ix + 0.5) * step, y = (iy + 0.5) * step;
     const p = [x, y];
     const isSolid = solids.some((polys) => polys.filter((poly) => inside(p, poly)).length % 2 === 1);
     const isStroke = !isSolid && strokes.some((st) => x >= st.box[0] && x <= st.box[2] && y >= st.box[1] && y <= st.box[3] && polyDist(p, st.pts) <= st.h);
     if (isSolid) solidN++;
-    if (isSolid || isStroke) inkN++;
+    if (isSolid || isStroke) { inkN++; mask[iy * n + ix] = 1; }
+  }
+  // blur radius ≈ 1/16 of the canvas (1.5px at 24), as in the visual blur test
+  // two box passes of radius 7 cells ≈ a gaussian of σ 1.5px at 24 (calibrated: crossings and
+  // arrow tips reach ~1.4× the reference; packed detail 1.6× and up)
+  const R = 7;
+  const bp = blurPeak(mask, n, R);
+  out.stats.blurPeak = bp.peak;
+  out.stats.blurAt = [r2((bp.x + 0.5) * step), r2((bp.y + 0.5) * step)];
+  if (mode === 'stroke') {
+    // reference: the default square keyline (outer 18 at 24) at this stroke
+    const ref = new Uint8Array(n * n), lo = 3 * unit + sw / 2, hi = size - 3 * unit - sw / 2;
+    for (let iy = 0; iy < n; iy++) for (let ix = 0; ix < n; ix++) {
+      const x = (ix + 0.5) * step, y = (iy + 0.5) * step;
+      const dx = Math.max(lo - x, 0, x - hi), dy = Math.max(lo - y, 0, y - hi);
+      const d = dx || dy ? Math.hypot(dx, dy) : Math.min(x - lo, hi - x, y - lo, hi - y);
+      if (d <= sw / 2) ref[iy * n + ix] = 1;
+    }
+    out.stats.blurRatio = bp.peak / blurPeak(ref, n, R).peak;
+    I(`blur test: darkest point ${r2(out.stats.blurRatio)}× the reference square's`);
+    if (out.stats.blurRatio > 1.5) W(`blur test: a dark clump near (${out.stats.blurAt.join(', ')}) is ${r2(out.stats.blurRatio)}× as dark as the reference square's darkest point — detail is packed too tight there; remove or space it`);
   }
   out.stats.inkArea = inkN * step * step;
   out.stats.solidShare = inkN ? solidN / inkN : 0;
   out.stats.density = out.stats.inkArea / Math.pow(size - 2 * pad, 2);
   I(`ink covers ${Math.round(out.stats.density * 100)}% of the live area${mode === 'stroke' && solidN ? `, ${Math.round(out.stats.solidShare * 100)}% of it solid` : ''}`);
-  if (mode === 'stroke' && out.stats.solidShare > 0.25) W(`${Math.round(out.stats.solidShare * 100)}% of this line icon's ink is solid fill — its filled version won't read as a different state. Open it up, or use it as the filled icon and draw a new line one`);
+  if (mode === 'stroke' && out.stats.solidShare > 0.25) W(`${Math.round(out.stats.solidShare * 100)}% of this line icon's ink is solid fill — its filled version won't read as a different state. Open it up, or use it as the filled icon and draw a new line one. Exception: an icon with no filled form (pause, stop, a dot), whose filled sibling is an exact copy`);
   return out;
 }
 
@@ -446,7 +501,7 @@ if (ok.length > 1) {
   const sizes = uniq((r) => r.stats.size), modes = uniq((r) => r.stats.mode);
   const strokes = uniq((r) => r.stats.stroke), caps = uniq((r) => r.stats.cap), joins = uniq((r) => r.stats.join);
   if (sizes.length > 1) console.log(`  WARN  mixed canvas sizes: ${sizes.join(', ')} — compare icons of one size at a time`);
-  if (modes.length > 1) console.log(`  WARN  mixed stroke and fill files: ${modes.join(', ')} — fine for outline/filled pairs, not within one style`);
+  if (modes.length > 1 && !pair) console.log(`  WARN  mixed stroke and fill files: ${modes.join(', ')} — fine for outline/filled pairs, not within one style`);
   if (sizes.length === 1 && strokes.filter(Boolean).length > 1) { console.log(`  ERROR mixed stroke widths at one size: ${strokes.join(', ')}`); errorCount++; }
   if (caps.filter(Boolean).length > 1) console.log(`  WARN  mixed linecaps: ${caps.join(', ')}`);
   if (joins.filter(Boolean).length > 1) console.log(`  WARN  mixed linejoins: ${joins.join(', ')}`);
@@ -505,9 +560,11 @@ figcaption{color:#888;font-size:10px;max-width:90px;text-align:center;overflow-w
 
 // line + filled pair
 if (pair) {
-  const [L, F] = pair.map((f) => results.find((r) => r.file === basename(f)));
+  const [L, F] = pair.map((f) => results.find((r) => r.path === f));
   console.log(`\nPAIR ${L.file} + ${F.file}`);
-  if (L.stats.ink && F.stats.ink) {
+  if (L.src.replace(/\s+/g, ' ').trim() === F.src.replace(/\s+/g, ' ').trim()) {
+    console.log('  ok    identical files: an icon with no filled form (open lines, already solid, or slashed), filled sibling = exact copy');
+  } else if (L.stats.ink && F.stats.ink) {
     const d = Math.max(...['minX', 'minY', 'maxX', 'maxY'].map((k) => Math.abs(L.stats.ink[k] - F.stats.ink[k])));
     if (d > 0.1 + EPS) { console.log(`  ERROR silhouettes differ by up to ${r2(d)}px — the filled icon must fill the line icon's outer shape exactly, or switching states jumps`); errorCount++; }
     else console.log(`  ok    silhouettes match (within ${r2(d)}px)`);
@@ -529,10 +586,19 @@ if (sheetSvgPath) {
     const keep = ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'fill-rule', 'clip-rule'];
     return { name: basename(f, '.svg'), size: vb[2], inner: m[2], attrs: keep.filter((k) => a[k] !== undefined).map((k) => [k, a[k]]) };
   }).filter(Boolean);
+  // reference circle and square in the set's stroke, for the blur row
+  const ref0 = ok.find((r) => r.stats.stroke);
+  const rsz = ref0?.stats.size || 24, rsw = ref0?.stats.stroke || 2, ru = rsz / 24;
+  const rattrs = [['fill', 'none'], ['stroke', 'currentColor'], ['stroke-width', String(rsw)], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']];
+  const sq = 18 * ru - rsw, so = (rsz - sq) / 2;
+  const refs = [
+    { name: 'ref-circle', size: rsz, attrs: rattrs, inner: `<circle cx="${rsz / 2}" cy="${rsz / 2}" r="${10 * ru - rsw / 2}"/>` },
+    { name: 'ref-square', size: rsz, attrs: rattrs, inner: `<rect x="${so}" y="${so}" width="${sq}" height="${sq}" rx="${Math.max(0, 3 * ru - rsw / 2)}"/>` },
+  ];
   const colour = (attrs, c) => attrs.map(([k, v]) => `${k}="${v === 'currentColor' ? c : v}"`).join(' ');
   const glyph = (it, x, y, px, c) => `<g transform="translate(${x} ${y}) scale(${px / it.size})" ${colour(it.attrs, c)}>${it.inner.replace(/currentColor/g, c)}</g>`;
   const order = items.map((it, k) => ({ it, k: (k * 7919) % 101 })).sort((a, b) => a.k - b.k).map((x) => x.it);
-  const col = 64, W = Math.max(400, items.length * col + 40);
+  const col = 64, W = Math.max(400, (items.length + 2) * col + 40);
   let y = 20, body = '';
   const label = (t, yy) => `<text x="20" y="${yy}" font-family="system-ui, sans-serif" font-size="11" fill="#777">${t}</text>`;
   body += label('blind (no names): crop for cold naming', y); y += 14;
@@ -542,11 +608,17 @@ if (sheetSvgPath) {
     items.forEach((it, i) => { body += glyph(it, 20 + i * col, y, px, '#000'); body += `<text x="${20 + i * col}" y="${y + px + 12}" font-family="system-ui, sans-serif" font-size="9" fill="#999">${it.name.slice(0, 11)}</text>`; });
     y += px + 20;
   }
+  // blur row: the icons next to the reference circle and square, gaussian σ = 1/16 of 24px
+  y += 10; body += label('blur test, 24px: nothing darker or lighter than the references, no dark clumps, silhouette still reads', y); y += 8;
+  body += '<g filter="url(#blur)">';
+  [...refs, ...items].forEach((it, i) => { body += glyph(it, 20 + i * col, y, 24, '#000'); });
+  body += '</g>';
+  y += 44;
   y += 10; body += `<rect x="10" y="${y}" width="${W - 20}" height="52" rx="8" fill="#111"/>`;
   body += `<text x="20" y="${y + 16}" font-family="system-ui, sans-serif" font-size="11" fill="#aaa">on dark, 24px</text>`;
   items.forEach((it, i) => { body += glyph(it, 20 + i * col, y + 22, 24, '#fff'); });
   y += 62;
-  writeFileSync(sheetSvgPath, `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y}" viewBox="0 0 ${W} ${y}"><rect width="${W}" height="${y}" fill="#fff"/>${body}</svg>`);
+  writeFileSync(sheetSvgPath, `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y}" viewBox="0 0 ${W} ${y}"><defs><filter id="blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.5"/></filter></defs><rect width="${W}" height="${y}" fill="#fff"/>${body}</svg>`);
   console.log(`\nsvg sheet → ${sheetSvgPath} (import into Figma or Paper, then screenshot: no local server needed)`);
 }
 

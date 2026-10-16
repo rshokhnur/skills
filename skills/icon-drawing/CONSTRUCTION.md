@@ -16,17 +16,19 @@ This is the user's chosen house style, modelled on OpenAI's product icons, measu
 | Small shapes (< 8px) | centre-line radius 1 (outer 2) | A radius 2 would swallow a short side |
 | Junctions (3+ lines meeting) | sharp | Rounded multi-line junctions render inconsistently across sizes |
 | Minimum gap | 2 (equal to the stroke) | A gap smaller than the stroke closes up at 16px |
-| Dots and tiny details | solid; dot Ø3 (1.5× stroke); "more" dots Ø4 | Outlined tiny details clog; solid marks read |
+| Dots and tiny details | solid. Standalone dots (more, bullets) 1.5–2× stroke (Ø3–4 at 24); punctuation dots inside a glyph (! ? i) 1.1–1.2× stroke | Outlined tiny details clog. A punctuation dot at 1.5× looks heavier than its stem |
 | Arrowheads | 90° chevron, arms about 5.5–7 long, joined to the shaft at its end | Matches the set's weight; long enough to read at 16 |
 | Angles | 45° first, then 30° / 60°; never arbitrary | Diagonals at 45° render evenly and repeat across the family |
-| Forms | flat, front-facing, soft (a gear is a rounded lobed flower, star tips rounded) | No perspective; no mechanical teeth |
+| Forms | flat, front-facing, soft (a gear is a rounded lobed flower, star tips rounded). Organic objects (food, body, nature, clouds) use continuous curves that pinch in between parts, never stepped rectangles | No perspective; no mechanical teeth. Correct corners on a stepped outline still look blocky on an organic object |
 | Detail | 1–3 shapes typical; 4–6 only for complex metaphors | The user's bar: simple at one glance |
 
 **Optional corner smoothing.** OpenAI smooths the dominant container corners (iOS-style continuous curvature). Apply Figma's corner smoothing at about 60% to containers of 14px or more when drawing in Figma. In hand-written SVG, use plain arcs; the difference is invisible at 24px.
 
 ## Per-size table (default style)
 
-Each size is redrawn from the 24 master's skeleton, never scaled. Weight steps by 0.25 and grows more slowly than the canvas, so small sizes are relatively heavier and don't look faint.
+Each size starts from the 24 master's skeleton and is checked and fixed as its own icon. In the default table, weight steps by 0.25 and grows more slowly than the canvas, so small sizes are relatively heavier and don't look faint.
+
+**Calibrate the stroke against the text.** The table is a starting point. Render the icon at the size used beside body text (usually 20) next to a real label. The stroke should match the label's stem weight. If it reads bold, step down by 0.25 and scale the other sizes by the same ratio of stroke to canvas (for example 1.5 at 20 → 0.075 → 1.8 at 24, 1.2 at 16). The set's own strokes then override the table. Re-run the checker afterwards: a thinner stroke only widens gaps.
 
 | Canvas | Stroke | Padding | Circle Ø | Square | Container radius (outer) | Gap min | Use |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,8 +39,8 @@ Each size is redrawn from the 24 master's skeleton, never scaled. Weight steps b
 | 32 | 2.5 | 3 | 26 | 24 | 3.5 | 2.5 | Large controls, empty states |
 
 - **Snapping at fractional strokes.** At 1.5 and 1.75, put the outer edge on a whole pixel. The centre-line then lands on .75 or .875, and that is correct (Polaris, Fluent, OpenAI).
-- **When to redraw a small size.** At 16, drop any detail whose counter would fall under 1.5, and merge or remove repeats (three lines become two). Ask before shipping 12px versions of anything except status marks.
-- **When fixed sizes are impossible.** If the stack can only scale one file, ship the 24 master and say so; it is the one sanctioned exception to redrawing.
+- **When to redraw a small size.** Scaling the 24 by the canvas ratio works as a start when the stroke ratio is constant, because every gap scales with it. Small shapes next to each other still tangle (two hills become an "M"), so check each one. At 16, drop any detail whose counter would fall under 1.5, and merge or remove repeats (three lines become two). Ask before shipping 12px versions of anything except status marks.
+- **When fixed sizes are impossible.** If the stack can only scale one file, ship the 24 master and say so; it is the one sanctioned exception to checking each size.
 
 ## Library cards (when matching a known set)
 
@@ -88,20 +90,20 @@ Confirm these against three real icons before drawing. Libraries change.
 
 - **Slot.** A modifier (plus, minus, check, x, clock, alert) sits bottom-right, about Ø10 at 24 with its outer edge at 22,22. Cut the base glyph with a gap around it. The size and slot are identical across the whole family.
 - **The base doesn't move.** A `-plus` or `-off` variant keeps the base glyph's coordinates exactly as in the plain icon. Swapping states must not jump.
-- **Slash ("off").** Its ink spans the live area corner to corner: centre-line (3,3) → (21,21) at padding 2, or (2,2) → (22,22) in a padding-1 set like Lucide. Remove the base on one side of the slash with a gap (usually the lower-left side), so the slash reads in front.
+- **Slash ("off").** Its ink spans the live area corner to corner: centre-line (3,3) → (21,21) at padding 2, or (2,2) → (22,22) in a padding-1 set like Lucide. Cut the base beside the slash so the slash reads in front. The cut, including the slash, is about 2.3× the stroke wide (4.2 at a 1.8 stroke, leaving about 0.65× stroke of clear space each side). A full gap each side eats too much of a small base. Let the slash run about 0.75 past the base at both ends, and enlarge small inner details (a pupil) so the base survives the cut. A slashed icon has no filled form: a solid shape with a slash through it stops reading. Its filled sibling is an exact copy.
 - **Modifiers are reused,** never redrawn. Copy the coordinates from the first icon that defined them.
 
 ## Filled and duotone variants
 
 - **Filled = the outline's outer silhouette, exactly.** For a centre-line radius r, the filled radius is r + stroke/2. Swapping outline and filled (inactive and active) never changes size.
 - **Interior details become knock-outs** at stroke − 0.25. Build filled variants from 1–3 contiguous solid shapes.
-- **Open-line icons** (arrows, chevrons, x, menu, check) have no filled form. Use the outline, or the stroke + 0.5 if a heavier selected state is required.
+- **Icons with no filled form:** open lines (arrows, chevrons, ×, menu, check, share, search), icons that are already solid (pause, stop, a dot), and slashed icons. Their filled sibling is an exact copy, so a component's Line/Filled variants always both exist. Use the stroke + 0.5 only if a heavier selected state is required.
+- **Fills that destroy the object:** a filled lens reads as a ball on a stick, a filled globe as a ball, a filled clock face hides the hands. When the blind name of the filled version changes, use the copy rule above.
 - **Line icons that are already solid** (more than 25% of their ink is fill: a half-moon, a pie chart, a toggle) have no distinct filled state. Open the line version up, or promote it to the filled icon and draw a new line one, such as an outline moon with a phase line.
 - **The meaning test.** Before filling, list the features that told the line icon apart from its look-alikes (the confusables check). After filling, each one must still show, as a cut-out or as silhouette. If filling swallowed one, redraw that feature as a cut-out with at least one gap from the edge. A filled house keeps its door; a filled user keeps the gap between head and shoulders; a filled bottle keeps its neck and the band narrower than the body.
-- **Where cut-outs go.**
-  - **Inside the shape:** at least one gap from the silhouette edge, or the rim becomes a sliver that vanishes at 16px.
-  - **Through the edge:** a cut that runs past the silhouette (a calendar's header line, a book's spine, a waistband) splits the solid into clean pieces. This often reads better than a cut that stops inside.
-  - **From the edge (a notch):** allowed for ticks and tabs, but it must run at least two gaps inward. A shorter notch reads as a dent in the outline.
+- **Where cut-outs go: always inside, never through the rim.** After the knock-outs, restore the outer rim at the line stroke's width, so the silhouette edge stays continuous. Header lines, spines, waistbands and tick marks become inner slots that stop one rim short of the edge. A cut that opens the edge chips the silhouette and breaks the outline match with the line icon.
+  - Keep at least one gap between a cut-out and the rim's inner edge, or the rim becomes a sliver that vanishes at 16px.
+  - On a stepped or tiered outline, cuts placed along the steps can remove whole tiers. Test them, and prefer cutting the tier lines from the line icon, or a plain fill when the steps already show in the silhouette.
 - **Duotone.** A tint shape at 20% opacity sits under the regular outline. It is drawn to the stroke's centre-line, so its edge hides under the stroke, and covers only the object's body. Duotone is the one place opacity is allowed, and only when the set already ships duotone.
 - **Usage, briefly** (the full rules belong to `icon-usage`): filled marks selected or active state and main navigation. It is never for emphasis or decoration.
 
@@ -137,6 +139,19 @@ A silhouette that reads as the wrong object fails even when it's drawn perfectly
 | crescent | contrast, night mode, "do not disturb" | if it means something else in your product, add the distinguishing context (a container, a modifier) |
 | clock | timer, history | timer: a crown button on top; history: a counter-clockwise arrow around the face |
 | bell | notification badge | already standard; don't reuse it for "alarm" without an alarm cue (legs or rays) |
+| ruler (flat) | battery | turn it 45°: a short, wide rounded bar with marks on one side is a battery |
+| kettlebell, lock | shopping bag, each other | lock: a shackle half the body's width and a keyhole with a slot; weight: a ring sitting on a trapezoid |
+| circle with "!" | info | for warnings use the triangle; the circle belongs to info |
+| "?" | the digit 2 | close the hook into a round bowl before the stem |
+| two outlined bars | "00", "OO", a battery | solid or narrow bars; check pause next to play |
+| eye with a slash | Ø, @ | a flatter eye (height ≈ 12 at 24), a modest pupil, and the slash cut at ≈2.3× stroke |
+| single diagonal line in a frame | a slash, "unavailable" | use two hills, the small one in front |
+| card with a bar on top | wallet, briefcase | a page with a bookmark ribbon; avoid two stacked cards, which read as "copy" |
+| flag | danger, report | in apps with safety or reporting features, use a map pin for region |
+| crescent + star | a religious symbol | never combine them; use a sunset or a screen with a moon for night mode |
+| paper plane with a fold line | location arrow, minus sign | one dart shape with a notch, no inner fold |
+| head or face | fruit, the letters a or q, a smiley | draw the tool, not the body part |
+| filled lens or globe | a ball | keep these as copies of the line icon |
 | symbol inside a speech bubble | a bare bubble, a badge | the symbol must be large enough to read: see "A symbol inside a container" |
 
 Add pairs to this table as tests find them.
